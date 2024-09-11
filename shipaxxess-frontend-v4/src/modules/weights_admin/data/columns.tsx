@@ -100,5 +100,5 @@ export const weightsColumns = (timezone: string) =>
 			enableSorting: true,
 			enableHiding: true,
 		},
-		{ id: "action", cell: ({ row }) => <TableMenu id={row.original.id} uuid={row.original.uuid} /> },
+		{ id: "action", cell: ({ row }:any) => <TableMenu id={row.original.id} uuid={row.original.uuid} /> },
 	] as ColumnDef<AdminWeightsSelectModel & { type: TypesSelectModel }>[];

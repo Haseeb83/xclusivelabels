@@ -6,7 +6,6 @@ import { ArrowUpDown, MessagesSquare } from "lucide-react";
 import { TicketsSelectModel } from "@db/tickets";
 import { app } from "@client/config/app";
 import { Link } from "react-router-dom";
-import { string } from "zod";
 
 export const ticketsColumns = (timezone: string) =>
 	[

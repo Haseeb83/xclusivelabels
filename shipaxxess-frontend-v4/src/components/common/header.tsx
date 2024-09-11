@@ -23,7 +23,7 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { useNotificationsQuery, useMarkAsReadMutation } from "@client/hooks/useNotificationsQuery";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { onMessage } from "firebase/messaging";
+import  {onMessage } from "firebase/messaging";
 import { messaging } from "@client/firebase/firebaseConfig";
 import { toast } from "sonner";
 

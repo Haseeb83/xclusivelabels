@@ -10,7 +10,7 @@ export const storesColumns = (timezone: string) =>
 	[
 		{
 			accessorKey: "store_name",
-			header: ({ column }) => {
+			header: ({ column }:any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Store Name
@@ -23,7 +23,7 @@ export const storesColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "type",
-			header: ({ column }) => {
+			header: ({ column }:any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Store Type
@@ -36,7 +36,7 @@ export const storesColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "created_at",
-			header: ({ column }) => {
+			header: ({ column }:any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Date
@@ -44,7 +44,7 @@ export const storesColumns = (timezone: string) =>
 					</Button>
 				);
 			},
-			cell: ({ row }) => (
+			cell: ({ row }:any) => (
 				<span className="whitespace-nowrap">
 					{moment.utc(row.original.created_at).tz(timezone).format(app.time.format)}
 				</span>
@@ -56,7 +56,7 @@ export const storesColumns = (timezone: string) =>
 			id: "action",
 			enableSorting: false,
 			enableHiding: false,
-			cell: ({ row }) => (
+			cell: ({ row }:any) => (
 				<Link to={`/stores/ebay?import_id=${row.original.id}`}>
 					<Button>View Orders</Button>
 				</Link>

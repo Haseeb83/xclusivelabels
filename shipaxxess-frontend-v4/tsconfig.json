@@ -1,5 +1,4 @@
 {
-	
 	"compilerOptions": {
 		"target": "ESNext",
 		"useDefineForClassFields": true,
@@ -31,6 +30,13 @@
 			],
 			"@pages": [
 				"./src/pages/*"
+			],
+			/* Added path for shipaxxess-zod-v4 */
+			"@shipaxxess/shipaxxess-zod-v4": [
+				"../node_modules/@shipaxxess/shipaxxess-zod-v4/src/*"
+			],
+			"@shipaxxess/shipaxxess-zod-v4/types": [
+				"../node_modules/@shipaxxess/shipaxxess-zod-v4/@types/*"
 			]
 		}
 	},

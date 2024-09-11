@@ -9,7 +9,7 @@ export const ordersColumns = (timezone: string) =>
 	[
 		{
 			accessorKey: "id",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button
 						className="px-0 whitespace-nowrap"
@@ -25,7 +25,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "full_name",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Name
@@ -38,7 +38,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "company",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Company
@@ -51,7 +51,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "street1",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Street1
@@ -64,7 +64,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "street2",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Street2
@@ -77,7 +77,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "city",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						City
@@ -90,7 +90,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "state",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						State
@@ -103,7 +103,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "zip",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Zip
@@ -116,7 +116,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "country",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Country
@@ -129,7 +129,7 @@ export const ordersColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "date",
-			header: ({ column }) => {
+			header: ({ column }: any) => {
 				return (
 					<Button className="px-0" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
 						Date
@@ -137,7 +137,7 @@ export const ordersColumns = (timezone: string) =>
 					</Button>
 				);
 			},
-			cell: ({ row }) => (
+			cell: ({ row }: any) => (
 				<span className="whitespace-nowrap">{moment.utc(row.original.date).tz(timezone).format(app.time.format)}</span>
 			),
 			enableSorting: true,

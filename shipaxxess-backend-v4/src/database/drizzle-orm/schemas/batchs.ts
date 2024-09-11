@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Labels } from "@shipaxxess/shipaxxess-zod-v4";
 import { InferInsertModel, InferSelectModel, sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";

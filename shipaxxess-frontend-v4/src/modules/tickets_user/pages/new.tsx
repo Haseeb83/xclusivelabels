@@ -5,7 +5,7 @@ import { Card } from "@client/components/ui/card";
 import { useLoading } from "@client/hooks/useLoading";
 import { api } from "@client/lib/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import{ Tickets } from '@shipaxxess/shipaxxess-zod-v4/tickets';
+import { Tickets } from "@shipaxxess/shipaxxess-zod-v4/tickets";
 import { Ticket } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";

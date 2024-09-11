@@ -2,7 +2,7 @@ import Breadcrumb from "@client/components/common/breadcrumb";
 import Meta from "@client/components/common/meta";
 import Title from "@client/components/common/title";
 import { Card } from "@client/components/ui/card";
-import { Type } from "@shipaxxess/shipaxxess-zod-v4";
+import { Type } from "@shipaxxess/shipaxxess-zod-v4/types/type";
 import { Type as IconType } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { TypeForm } from "../components/form";

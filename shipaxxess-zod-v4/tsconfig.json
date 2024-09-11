@@ -3,8 +3,6 @@
 		"target": "esnext",
 		"lib": ["ESNext"],
 		"module": "NodeNext",
-		"skipLibCheck": true,
-		"strict": true,
 		"outDir": "./dist",
 		"moduleResolution": "NodeNext",
 		"esModuleInterop": true,

@@ -1,11 +1,10 @@
 {
 	"compilerOptions": {
-		"target": "esnext",
+		"target": "es5",
 		"lib": ["ESNext"],
 		"module": "NodeNext",
 		"outDir": "./dist",
 		"moduleResolution": "NodeNext",
-		"esModuleInterop": true,
 		"declaration": true,
 		"declarationMap": true,
 		"declarationDir": "./@types"

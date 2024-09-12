@@ -2,7 +2,6 @@
 	"name": "@shipaxxess/shipaxxess-backend-v4",
 	"private": "true",
 	"scripts": {
-		"start": "ts-node src/server.ts",
 		"dev": "wrangler dev src/index.ts --port 8000",
 		"deploy": "wrangler deploy --minify src/index.ts",
 		"generate": "npx drizzle-kit generate:sqlite --config ./src/database/drizzle-orm/drizzle.config.ts",

@@ -29,7 +29,7 @@ const FromComponent = ({
 								<FormLabel>Delivery Type</FormLabel>
 								<Select
 									defaultValue={field.value}
-									onValueChange={(value) => {
+									onValueChange={(value: any) => {
 										console.log(value);
 										field.onChange(value);
 									}}>

@@ -1,15 +1,12 @@
 {
 	"compilerOptions": {
-		"target": "ESNext",
+		"target": "ES2020",
 		"useDefineForClassFields": true,
-		"lib": [
-			"ESNext",
-			"DOM",
-			"DOM.Iterable"
-		],
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
 		"module": "ESNext",
+		"skipLibCheck": true,
 		/* Bundler mode */
-		"moduleResolution": "Bundler",
+		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
@@ -21,27 +18,12 @@
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
 		"paths": {
-			"@client/*": [
-				"./src/*"
-			],
-			"@db/*": [
-				"../shipaxxess-backend-v4/src/database/drizzle-orm/schemas/*"
-			],
-			"@pages": [
-				"./src/pages/*"
-			],
-			/* Added path for shipaxxess-zod-v4 */
-			"@shipaxxess/shipaxxess-zod-v4": [
-				"../node_modules/@shipaxxess/shipaxxess-zod-v4/src/*"
-			],
-			"@shipaxxess/shipaxxess-zod-v4/types": [
-				"../node_modules/@shipaxxess/shipaxxess-zod-v4/@types/*"
-			]
+			"@client/*": ["./src/*"],
+			"@db/*": ["../shipaxxess-backend-v4/src/database/drizzle-orm/schemas/*"],
+			"@pages": ["./src/pages/*"]
 		}
 	},
-	"include": [
-		"src"
-	],
+	"include": ["src"],
 	"references": [
 		{
 			"path": "./tsconfig.node.json"

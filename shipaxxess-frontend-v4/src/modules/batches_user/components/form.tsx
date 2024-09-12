@@ -306,7 +306,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 												<FormLabel>Delivery Type</FormLabel>
 												<Select
 													defaultValue={field.value}
-													onValueChange={(id) => {
+													onValueChange={(id: any) => {
 														if (!types.data) return;
 
 														const item = findItemById(types.data, Number(id));
@@ -369,7 +369,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 												<FormLabel>Ship From</FormLabel>
 												<Select
 													defaultValue={field.value}
-													onValueChange={(id) => {
+													onValueChange={(id: string) => {
 														if (id === "custom") {
 															field.onChange(id);
 														}
@@ -579,7 +579,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 												<FormLabel>Package</FormLabel>
 												<Select
 													defaultValue={field.value}
-													onValueChange={(id) => {
+													onValueChange={(id: any) => {
 														if (!packages.data) return toast.error("No packages found");
 
 														const item = findItemById(packages.data, Number(id));

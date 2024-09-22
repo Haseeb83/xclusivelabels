@@ -10,8 +10,6 @@ export class APIManger {
 	    // WebSocket properties
 	private webSocket: WebSocket | null = null;
 	private notificationCallback: ((message: string) => void) | null = null;
-	
-
 	/**
 	 *
 	 */

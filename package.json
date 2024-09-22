@@ -13,6 +13,8 @@
 		"nodemailer": "^6.9.14"
 	},
 	"devDependencies": {
+		"@types/js-cookie": "^3.0.6",
+		"@types/moment": "^2.11.29",
 		"@types/nodemailer": "^6.4.15",
 		"@types/uuid": "^10.0.0",
 		"lerna": "^8.0.1"

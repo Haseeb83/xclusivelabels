@@ -17,7 +17,6 @@ import { numberWithCommas } from "@client/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { ScrollArea } from "../ui/scroll-area";
 import moment from "moment-timezone";
-import PushNotificationComponent from "./push";
 import { UsersSelectModel } from "@db/users";
 import { UseQueryResult } from "@tanstack/react-query";
 import { useNotificationsQuery, useMarkAsReadMutation } from "@client/hooks/useNotificationsQuery";
@@ -30,13 +29,13 @@ import { toast } from "sonner";
 const Header = ({ items, user }: { items: HeaderProps[]; user: UseQueryResult<UsersSelectModel> }) => {
 	const notificationsQuery = useNotificationsQuery();
 
-	// Example function definitions
+	// Example function definitions for bell notification
 	const bellRing = () => {
-		setShowBellDot(true);
+		// This function is called when there are unread notifications
 	};
 
 	const resetBell = () => {
-		setShowBellDot(false);
+		// This function is called when all notifications are marked as read
 	};
 
 	onMessage(messaging, (payload: any) => {
@@ -148,12 +147,20 @@ const ProfileDropDownMenu = ({
 	);
 };
 
-const NotificationsComponent = ({ userQuery }: { userQuery: UseQueryResult<UsersSelectModel> }) => {
+const NotificationsComponent = ({
+	userQuery,
+	bellRing,
+	resetRing,
+}: {
+	userQuery: UseQueryResult<UsersSelectModel>;
+	bellRing: () => void;
+	resetRing: () => void;
+}) => {
 	const notifications: NotificationProps[] = [];
 	const notificationsQuery = useNotificationsQuery();
 	const [unreadNotifcationCount, setUnreadNotificationCount] = useState(0);
 	const markAsReadMutation = useMarkAsReadMutation();
-	const [showBellDot, setShowBellDot] = useState(false);
+
 	notificationsQuery.data?.forEach((notification: { title: any; description: any; created_at: any; read: any }) => {
 		notifications.push({
 			title: notification.title,
@@ -167,24 +174,22 @@ const NotificationsComponent = ({ userQuery }: { userQuery: UseQueryResult<Users
 		if (notificationsQuery.isSuccess) {
 			const unreadNotifications = notificationsQuery.data?.filter((notification: { read: any }) => !notification.read);
 			if (unreadNotifications?.length) {
-				setShowBellDot(true);
+				bellRing();
 			} else {
-				setShowBellDot(false);
+				resetRing();
 			}
 		}
-	}, [notificationsQuery.data]);
+	}, [notificationsQuery.data, bellRing, resetRing]);
 
 	const markAllAsRead = async () => {
 		await markAsReadMutation.mutateAsync();
-		setShowBellDot(false);
-		// update the notification locally
+		resetRing();
 		notificationsQuery.data?.forEach((notification: { read: boolean }) => {
 			notification.read = true;
 		});
 		setUnreadNotificationCount(0);
 	};
 
-	// count unread notifications
 	useEffect(() => {
 		if (notificationsQuery.isSuccess) {
 			const unreadNotifications = notificationsQuery.data?.filter((notification: { read: any }) => !notification.read);
@@ -212,7 +217,9 @@ const NotificationsComponent = ({ userQuery }: { userQuery: UseQueryResult<Users
 
 			<DropdownMenu>
 				<DropdownMenuTrigger className="p-2 rounded outline-none bg-primary/5 hover:ring-2 hover:ring-primary/10">
-					<div className="relative">{showBellDot ? <BellDot /> : <Bell />}</div>
+					<div className="relative">
+						{unreadNotifcationCount > 0 ? <BellDot /> : <Bell />}
+					</div>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="absolute p-0 -right-5 ">
 					<Card className="w-[400px] rounded-lg overflow-hidden">
@@ -222,44 +229,47 @@ const NotificationsComponent = ({ userQuery }: { userQuery: UseQueryResult<Users
 							<CardDescription>You have {unreadNotifcationCount} unread messages.</CardDescription>
 						</CardHeader>
 						<CardContent className="grid gap-4">
-							<PushNotificationComponent />
-							<ScrollArea className="max-h-[300px] mt-2">
+							<ScrollArea className="h-[300px] w-full rounded-md">
 								{notificationsQuery.isLoading && (
-									<>
-										<Skeleton className="w-full h-5" />
-										<Skeleton className="w-full h-10" />
-									</>
-								)}
-								{notifications?.map((notification, index) => (
-									<div
-										key={index}
-										className="mb-4 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 hover:bg-primary/5 py-4 px-3 rounded-lg">
-										{!notification.read == true ? (
-											<span className="flex w-2 h-2 translate-y-1 rounded-full bg-primary" />
-										) : (
-											<span className="flex w-2 h-2 translate-y-1 rounded-full" />
-										)}
-										<div className="space-y-1">
-											<p className="flex items-center justify-between text-sm font-medium leading-none">
-												<span>{notification.title}</span>
-												<span className="text-xs font-light text-muted-foreground">
-													{moment(notification.created_at).fromNow()}
-												</span>
-											</p>
-											<p className="text-sm text-muted-foreground">{notification.description}</p>
-										</div>
+									<div className="flex flex-col gap-2">
+										<Skeleton className="w-full h-[70px]" />
+										<Skeleton className="w-full h-[70px]" />
+										<Skeleton className="w-full h-[70px]" />
 									</div>
-								))}
+								)}
+
+								{notificationsQuery.isSuccess &&
+									notifications.map((notification, index) => {
+										return (
+											<Card key={index} className="w-full rounded-lg border">
+												<CardHeader className="w-full items-start justify-between">
+													<h1 className="font-medium text-md">{notification.title}</h1>
+													<CardDescription>{notification.description}</CardDescription>
+												</CardHeader>
+
+												<CardFooter className="w-full items-center justify-between">
+													<p className="text-xs font-normal leading-none text-muted-foreground">
+														{moment(notification.created_at).fromNow()}
+													</p>
+													{notification.read === false && (
+														<Button
+															variant="outline"
+															size="sm"
+															className="text-xs py-0 h-7"
+															onClick={() => markAsReadMutation.mutateAsync()}>
+															<Check size={16} />
+															Mark as Read
+														</Button>
+													)}
+												</CardFooter>
+											</Card>
+										);
+									})}
 							</ScrollArea>
-							{notificationsQuery.data?.length === 0 && (
-								<div className="flex items-center justify-center py-8">
-									<img src="/svg/empty.svg" height={200} width={200} alt="empty svg" />
-								</div>
-							)}
 						</CardContent>
 						<CardFooter>
-							<Button className="w-full" onClick={markAllAsRead}>
-								<Check className="w-4 h-4 mr-2" /> Mark all as read
+							<Button variant="default" className="gap-2" onClick={() => markAllAsRead()}>
+								<Check size={16} /> Mark All as Read
 							</Button>
 						</CardFooter>
 					</Card>
@@ -268,6 +278,3 @@ const NotificationsComponent = ({ userQuery }: { userQuery: UseQueryResult<Users
 		</div>
 	);
 };
-function setShowBellDot(_arg0: boolean) {
-	throw new Error("Function not implemented.");
-}

@@ -9,7 +9,7 @@
 		"tail": "npx wrangler tail"
 	},
 	"dependencies": {
-		"@shipaxxess/shipaxxess-zod-v4": "workspace:*",
+		"@shipaxxess": "git+https://github.com/pwz2k/shipaxxess-v4/tree/master/shipaxxess-zod-v4",
 		"@types/uuid": "^9.0.7",
 		"drizzle-orm": "^0.29.2",
 		"google-auth-library": "^9.11.0",

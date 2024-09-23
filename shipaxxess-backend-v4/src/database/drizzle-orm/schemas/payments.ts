@@ -1,5 +1,4 @@
 import { InferInsertModel, InferSelectModel, sql } from "drizzle-orm";
-import { date } from "drizzle-orm/mysql-core";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const payments = sqliteTable("payments", {

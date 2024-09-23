@@ -5,7 +5,7 @@ import { api } from "@client/lib/api";
 import { ChatsSelectModel } from "@db/chats";
 import { TicketsSelectModel } from "@db/tickets";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Chats } from "@shipaxxess/shipaxxess-zod-v4/types/chats";
+import { Chats } from "@shipaxxess/shipaxxess-zod-v4";
 import { useForm } from "react-hook-form";
 
 type SendChatFormProps = {

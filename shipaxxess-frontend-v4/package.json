@@ -10,7 +10,7 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@shipaxxess/shipaxxess-zod-v4": "workspace:*",
+		"@shipaxxess": "git+https://github.com/pwz2k/shipaxxess-v4/tree/master/shipaxxess-zod-v4",
 
 		"@amcharts/amcharts4": "^4.10.38",
 		"@amcharts/amcharts4-geodata": "^4.1.29",

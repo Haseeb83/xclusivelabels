@@ -9,7 +9,6 @@ export class APIManger {
 	private headers: HeadersInit | null = { "Content-Type": "application/json" };
 	    // WebSocket properties
 	private webSocket: WebSocket | null = null;
-	private notificationCallback: ((message: string) => void) | null = null;
 	/**
 	 *
 	 */
@@ -196,7 +195,6 @@ export class APIManger {
             console.log('WebSocket connection closed');
         };
 
-        this.notificationCallback = onNotification;
 		return this
     }
 
@@ -207,7 +205,6 @@ export class APIManger {
         if (this.webSocket) {
             this.webSocket.close();
             this.webSocket = null;
-            this.notificationCallback = null;
         }
     }
 

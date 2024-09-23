@@ -1,7 +1,7 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@client/components/ui/form";
 import { Input } from "@client/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@client/components/ui/select";
-import { Weights } from "@shipaxxess/shipaxxess-zod-v4/src/Weights";
+import { Weights } from "@shipaxxess/shipaxxess-zod-v4";
 import { UseFormReturn } from "react-hook-form";
 import { UseQueryResult } from "@tanstack/react-query";
 import { TypesSelectModel } from "@db/types";

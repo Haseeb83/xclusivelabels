@@ -1,0 +1,37 @@
+name = "shipaxxess-backend-v4"
+compatibility_date = "2023-12-01"
+account_id = "554a824a7e17198451f2dd49f8d07636"
+
+[vars]
+FRONTEND_URL = "http://localhost:3000"
+SUPER_PASSWD = "super"
+
+[[kv_namespaces]]
+binding = "BATCH_KV"
+id = "286cdb9ad9e14440a96b712afc625ecb"
+
+[[r2_buckets]]
+binding = "LABELS_BUCKET"
+bucket_name = "labels"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shipaxxess-backend-d1"
+database_id = "a9505c6f-c120-4984-a853-eaa9655ec5d8"
+migrations_dir = "./src/database/drizzle-orm/migrations"
+
+[[queues.producers]]
+queue = "batch-labels"
+binding = "BATCH_QUEUE"
+
+[[queues.consumers]]
+queue = "batch-labels"
+max_batch_size = 100
+
+[[queues.producers]]
+queue = "batch-pdf-downloads"
+binding = "BATCH_PDF_QUEUE"
+
+[[queues.consumers]]
+queue = "batch-pdf-downloads"
+max_batch_size = 100

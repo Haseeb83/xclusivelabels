@@ -75,36 +75,37 @@ const PostMessage = async (c: Context<App>) => {
 `;
 	emailSubject = `New message from Support on your ticket `;
 
-	c.executionCtx.waitUntil(mail(c.env.DB, {
-		to: ticketOwner.email_address,
-		subject: emailSubject,
-		html: emailBody,
-	})
-	)
+	c.executionCtx.waitUntil(
+		mail(c.env.DB, {
+			to: ticketOwner.email_address,
+			subject: emailSubject,
+			html: emailBody,
+		}),
+	);
 
 	const notifcaiton: INOtifcation = {
 		title: "Reply to ticket",
 		description: `${user.first_name} ${user.last_name} has replied to your ticket`,
 		user_id: user_id,
 		uuid: v4(),
-
-	}
+		box_color:"white",
+	};
 
 	await SaveNotifcaiton(c.env.DB, notifcaiton);
-	const devicetoken = await model.all(subscriptions, and(eq(subscriptions.user_id, ticketOwner.id), eq(subscriptions.is_active, true)));
+	const devicetoken = await model.all(
+		subscriptions,
+		and(eq(subscriptions.user_id, ticketOwner.id), eq(subscriptions.is_active, true)),
+	);
 	if (devicetoken.length > 0) {
-
-		devicetoken.forEach(async (token: { token: string; }) => {
+		devicetoken.forEach(async (token) => {
 			await sendPushNotification(token.token, {
 				title: "Reply to ticket",
 				body: `${user.first_name} ${user.last_name} has replied to your ticket`,
 				icon: "/favicon.ico",
 				data: { url: `${config.app.loclhost}/tickets/${tk.uuid}` },
 			});
-		})
-
+		});
 	}
-
 
 	return c.json(cht);
 };
@@ -142,36 +143,36 @@ const Close = async (c: Context<App>) => {
 `;
 	emailSubject = `Ticket closed by Support`;
 
-	c.executionCtx.waitUntil(mail(c.env.DB, {
-		to: ticketOwner.email_address,
-		subject: emailSubject,
-		html: emailBody,
-	})
-	)
+	c.executionCtx.waitUntil(
+		mail(c.env.DB, {
+			to: ticketOwner.email_address,
+			subject: emailSubject,
+			html: emailBody,
+		}),
+	);
 	// save notification for ticket owner
 	const notifcaiton: INOtifcation = {
 		title: "Ticket closed",
 		description: `Your ticket has been closed`,
 		user_id: user_id,
 		uuid: v4(),
-
-	}
+		box_color:"white",
+	};
 
 	await SaveNotifcaiton(c.env.DB, notifcaiton);
-	const devicetoken = await model.all(subscriptions, and(eq(subscriptions.user_id, ticketOwner.id), eq(subscriptions.is_active, true)));
+	const devicetoken = await model.all(
+		subscriptions,
+		and(eq(subscriptions.user_id, ticketOwner.id), eq(subscriptions.is_active, true)),
+	);
 	if (devicetoken.length > 0) {
-
-		devicetoken.forEach(async (token: { token: string; }) => {
+		devicetoken.forEach(async (token) => {
 			await sendPushNotification(token.token, {
 				title: "Ticket closed",
 				body: `Your ticket has been closed`,
 				icon: "/favicon.ico",
 				data: { url: `${config.app.loclhost}/tickets/${tk.uuid}` },
-
-
 			});
-		})
-
+		});
 	}
 
 	return c.json({ success: true });
@@ -180,4 +181,3 @@ const Close = async (c: Context<App>) => {
 const TicketsAdmin = { Get, GetAll, PostMessage, Close };
 
 export { TicketsAdmin };
-

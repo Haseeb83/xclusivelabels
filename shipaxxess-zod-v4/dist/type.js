@@ -6,13 +6,13 @@ exports.ZODSCHEMA = zod_1.z.object({
     label: zod_1.z.string(),
     value: zod_1.z.string(),
     unit: zod_1.z.enum(["oz", "lb"]),
-    type: zod_1.z.enum(["usps", "ups"]),
+    type: zod_1.z.enum(["usps", "ups", "fedex"]),
 });
 exports.IDZODSCHEMA = exports.ZODSCHEMA.merge(zod_1.z.object({ id: zod_1.z.number() }));
 exports.CREATESCHEMA = zod_1.z.object({
     label: zod_1.z.string(),
     value: zod_1.z.string(),
     unit: zod_1.z.enum(["oz", "lb"]),
-    type: zod_1.z.enum(["usps", "ups"]),
+    type: zod_1.z.enum(["usps", "ups", "fedex"]),
 });
 exports.EDITSCHEMA = exports.CREATESCHEMA.merge(zod_1.z.object({ id: zod_1.z.number() }));

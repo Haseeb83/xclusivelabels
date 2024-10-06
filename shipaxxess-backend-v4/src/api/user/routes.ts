@@ -3,7 +3,6 @@ import { AddressesUser } from "./addresses";
 import { DashboardUser } from "./dashboard";
 import { EbayUser } from "./ebay";
 import { LabelsUser } from "./labels";
-
 import { UserNotification } from "./notification";
 import { PackagesUser } from "./packages";
 import { PaymentUser } from "./payment";
@@ -14,7 +13,8 @@ import { StoreUser } from "./stores";
 import { TicketsUser } from "./tickets";
 import { TypeUser } from "./types";
 import { WeightsUser } from "./weights";
-
+import { CouponsAdmin } from "@api/admin/coupon";
+import { DiscountAdmin } from "@api/admin/discount";
 const user = new Hono<App>();
 
 // Status routes
@@ -22,13 +22,14 @@ user.get("/status", StatusUser);
 
 // Dashboard routes
 
-
 // Labels routes
 user.post("/labels/download", LabelsUser.DownloadSingle);
 user.post("/labels/refund", LabelsUser.RefundAsSingle);
 
 user.get("/labels/batch", LabelsUser.GetAll);
+user.post("/labels/singleLabel", LabelsUser.CreateSingle);
 user.post("/labels/batch", LabelsUser.Create);
+
 user.post("/labels/batch/download", LabelsUser.DownloadBatch);
 user.get("/labels/batch/:uuid", LabelsUser.Get);
 user.post("/labels/batch/refund", LabelsUser.RefundAsBatch);
@@ -77,6 +78,10 @@ user.post("/settings/coupon", SettingsUser.Coupon);
 
 // Weights routes
 user.post("/weights", WeightsUser.Post);
+// Discount routes
+user.get("/discounts", DiscountAdmin.GetAll);
+// coupon routes
+user.get("/couponsByCode/:code", CouponsAdmin.GetCouponByCode);
 
 // Types routes
 user.get("/types", TypeUser.GetAll);
@@ -93,8 +98,4 @@ user.get("/subscription", UserNotification.subscriptionStatus);
 // user dashboard
 user.get("/dashboard", DashboardUser.Get);
 
-
-
-
 export { user };
-

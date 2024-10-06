@@ -3,7 +3,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@client/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { Package } from "@shipaxxess/shipaxxess-zod-v4";
-import { RadioGroup, RadioGroupItem } from "@client/components/ui/radio-group";
 
 const PackageForm = ({
 	form,
@@ -47,44 +46,16 @@ const PackageForm = ({
 					control={form.control}
 					name="radio"
 					render={({ field }) => (
-						<FormItem className="space-y-3">
-							<FormLabel>Type</FormLabel>
-							<FormControl>
-								<RadioGroup
-									onValueChange={field.onChange}
-									defaultValue={field.value}
-									className="flex items-center gap-4">
-									<FormItem className="flex items-center space-x-3 space-y-0">
-										<FormControl>
-											<RadioGroupItem value="lb" />
-										</FormControl>
-										<FormLabel className="font-normal ">lb</FormLabel>
-									</FormItem>
-									<FormItem className="flex items-center space-x-3 space-y-0">
-										<FormControl>
-											<RadioGroupItem value="oz" />
-										</FormControl>
-										<FormLabel className="font-normal">oz</FormLabel>
-									</FormItem>
-								</RadioGroup>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<FormField
-					control={form.control}
-					name="length"
-					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Length (inch)</FormLabel>
+							<FormLabel>Unit (lb/oz)</FormLabel>
 							<FormControl>
-								<Input {...field} type="number" onChange={(event) => field.onChange(+event.target.value)} />
+								<Input {...field} />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
 					)}
 				/>
+
 				<FormField
 					control={form.control}
 					name="width"
@@ -111,7 +82,19 @@ const PackageForm = ({
 						</FormItem>
 					)}
 				/>
-
+				<FormField
+					control={form.control}
+					name="length"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Length (inch)</FormLabel>
+							<FormControl>
+								<Input {...field} type="number" onChange={(event) => field.onChange(+event.target.value)} />
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 				{button}
 			</form>
 		</Form>

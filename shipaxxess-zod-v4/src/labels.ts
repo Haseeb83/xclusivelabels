@@ -23,6 +23,7 @@ export const COMMONSCHEMA = z.object({
 	signature: z.boolean().optional(),
 	name: z.string().optional(),
 	saved_sender: z.boolean().default(false),
+	coupon: z.string().optional(),
 });
 
 export type COMMONSCHEMA = z.infer<typeof COMMONSCHEMA>;
@@ -55,6 +56,7 @@ export const SEARCHZODSCHEMA = z.object({
 	name: z.string().optional(),
 	weight: z.string().optional(),
 	delivery_id: z.string().optional(),
+	delivery_type: z.string().optional(),
 	weight_unit_query: z.string().optional(),
 	status: z.string().optional(),
 	from_date: z.date().optional(),

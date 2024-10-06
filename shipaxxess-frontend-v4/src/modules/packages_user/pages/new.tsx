@@ -21,11 +21,11 @@ const NewPackageUserPage = () => {
 	const form = useForm<Package.ZODSCHEMA>({
 		resolver: zodResolver(Package.ZODSCHEMA),
 		defaultValues: {
-			height: 0,
-			length: 0,
+			height: undefined,
+			length: undefined,
 			name: "",
-			weight: 0,
-			width: 0,
+			weight: undefined,
+			width: undefined,
 			radio: "lb",
 		},
 	});
@@ -38,7 +38,7 @@ const NewPackageUserPage = () => {
 
 		if (res.success) {
 			api.showSuccessToast();
-			navigate("/packages");
+			navigate("/user/packages");
 			return;
 		}
 
@@ -54,8 +54,8 @@ const NewPackageUserPage = () => {
 				<Title title="Create Saved Package" />
 				<Breadcrumb
 					items={[
-						{ title: "Packages", link: "/packages", icon: <Boxes size={16} /> },
-						{ title: "Create Saved Package", link: "/packages/new" },
+						{ title: "Packages", link: "/user/packages", icon: <Boxes size={16} /> },
+						{ title: "Create Saved Package", link: "/user/packages/new" },
 					]}
 				/>
 				<Card className="p-8">

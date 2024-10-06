@@ -14,11 +14,16 @@ interface GenericLineChartProps {
     width?: number;
     height?: number;
     xAxisLink?: string;
+    isDollarIcon?: boolean;
 }
 
-const GenericLineChart: React.FC<GenericLineChartProps> = ({ data, title, valueKey, icon, width = "100%", height = 400 }) => {
-    const totalValue = data.reduce((acc, item) => acc + item.value, 0);
+const GenericLineChart: React.FC<GenericLineChartProps> = ({ data, title, valueKey, icon, width = "100%", height = 400, isDollarIcon=true }) => {
+    const totalValue = data.reduce((acc, item) => Number(acc) + Number(item.value), 0).toFixed(2);
+    const tooltipFormatter = (value: number) => {
+        return [`${isDollarIcon ? "$" : ""}${value}`]; 
+    };
 
+  
     return (
         <div className="p-4 bg-white shadow-md rounded-lg">
             <div className='flex justify-center gap-x-1'>
@@ -26,7 +31,7 @@ const GenericLineChart: React.FC<GenericLineChartProps> = ({ data, title, valueK
                 <h2 className="text-2xl font-bold mb-2">{title}</h2>
             </div>
             <div className="flex justify-center mb-4">
-                <h3 className="text-xl font-bold">${totalValue.toFixed(2)}</h3>
+                <h3 className="text-xl font-bold">{totalValue}</h3>
             </div>
 
             <ResponsiveContainer width={width} height={height}>
@@ -34,7 +39,9 @@ const GenericLineChart: React.FC<GenericLineChartProps> = ({ data, title, valueK
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="label"
                     />
-                    <Tooltip />
+                  <Tooltip 
+                        formatter={tooltipFormatter} 
+                    />
                     <Legend />
                     <Line
                         type="linear"

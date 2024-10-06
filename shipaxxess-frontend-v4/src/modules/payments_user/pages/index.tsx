@@ -44,7 +44,7 @@ const PaymentsUserPage = () => {
 						</>
 					}
 				/>
-				<Breadcrumb items={[{ title: "Payments", link: "/payments", icon: <CreditCard size={16} /> }]} />
+				<Breadcrumb items={[{ title: "Payments", link: "/user/payments", icon: <CreditCard size={16} /> }]} />
 				<CardTable />
 			</div>
 		</>

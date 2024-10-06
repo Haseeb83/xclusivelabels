@@ -25,12 +25,12 @@ const Get = async (c: Context<App>) => {
 const Create = async (c: Context<App>) => {
 	const body = await c.req.json();
 	const parse = Tickets.ZODSCHEMA.parse(body);
-
 	const model = new Model(c.env.DB);
-
-	const user = await model.get(users, eq(users.id, c.get("jwtPayload").id));
+	
+		const user = await model.get(users, eq(users.id, c.get("jwtPayload").id));
+		console.log(user,"---------->");
 	if (!user) throw exception({ message: "User not found", code: 5564 });
-
+	
 	const ticket_uuid = v4();
 	await model.insert(tickets, {
 		content: parse.content,
@@ -40,7 +40,7 @@ const Create = async (c: Context<App>) => {
 		uuid: ticket_uuid,
 		data_id: parse.data_id,
 	});
-
+	
 	await model.insert(chats, {
 		message: parse.content,
 		message_author: `${user.first_name} ${user.last_name}`,
@@ -51,13 +51,14 @@ const Create = async (c: Context<App>) => {
 	});
 	const admins = await model.all(users, eq(users.isadmin, true));
 	const adminEmails = admins.map((a) => a.email_address);
-
-	const ticket = await model.get(tickets, eq(tickets.uuid, c.req.param("ticket_id")));
+	
+	const ticket = await model.get(tickets, eq(tickets.user_id, c.get("jwtPayload").id));
+	
 	if (!ticket) throw exception({ message: "Ticket not found", code: 5564 });
 	const ticketOwner = await model.get(users, eq(users.id, ticket.user_id));
 	if (!ticketOwner) throw exception({ message: "Ticket owner not found", code: 5564 });
-
-
+	
+	
 
 	let emailBody = ``;
 
@@ -117,12 +118,31 @@ const Create = async (c: Context<App>) => {
 			}),
 		);
 	}
+
+
+
+	
+	c.executionCtx.waitUntil(
+		mail(c.env.DB, {
+			to: user.email_address,
+			subject: "Your Support Ticket Has Been Received",
+			html: `
+	<p>Hi ${user.first_name},</p>
+	<p>your ticket has been received for ${parse.type}, we will get in touch with you as soon as possible </p>
+	<p>Thanks!</p>
+	<p>The ${config.app.name} Team</p>
+	`,
+		}),
+	);
+
+
 	// save message notification into admin notification table
 	const notification = {
 		user_id: admins[0].id,
 		title: "New ticket created",
 		description: `A new ticket has been created by ${user.first_name} ${user.last_name}`,
 		uuid: v4(),
+		box_color: "white",
 	}
 
 	await SaveNotifcaiton(c.env.DB, notification);
@@ -214,6 +234,7 @@ const PostMessage = async (c: Context<App, "/:ticket_id">) => {
 		title: "New message from user",
 		description: `A new message has been posted by ${user.first_name} ${user.last_name}`,
 		uuid: v4(),
+		box_color: "white",
 	}
 	await SaveNotifcaiton(c.env.DB, notification);
 	const devicetoken = await drizzle(c.env.DB).select().from(subscriptions).where(and(eq(subscriptions.user_id, admins[0].id), eq(subscriptions.is_active, true))).all()

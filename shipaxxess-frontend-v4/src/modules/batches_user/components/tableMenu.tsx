@@ -38,16 +38,20 @@ const TableMenu = ({ row }: { row: Row<BatchsSelectModel> }) => {
 	});
 
 	const downloadSinglePDF = async () => {
+		const apiurl = app.mode === "dev" ? app.api : app.prod_api;
+		// const apiurl = app.prod_api;
+		console.log(row);
+
 		const download = () =>
 			new Promise((resolve, reject) => {
-				fetch(`${app.api}/user/labels/batch/download`, {
+				fetch(`${apiurl}/user/labels/download`, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 						Authorization: `Bearer ${localStorage.getItem("token")}`,
 					},
 					body: JSON.stringify({
-						uuid: row.original.uuid,
+						id: row.original.id,
 					}),
 				})
 					.then((response) => {
@@ -85,7 +89,7 @@ const TableMenu = ({ row }: { row: Row<BatchsSelectModel> }) => {
 	return (
 		<div className="flex items-center gap-2">
 			{row.original.total_labels !== 1 && (
-				<Link to={`/orders/${row.original.uuid}`}>
+				<Link to={`/user/orders/${row.original.uuid}`}>
 					<Button variant="outline">View</Button>
 				</Link>
 			)}
@@ -117,7 +121,7 @@ const TableMenu = ({ row }: { row: Row<BatchsSelectModel> }) => {
 						/>
 					)}
 
-					<Link to={`/tickets/new?type=label&id=${row.original.uuid}`}>
+					<Link to={`/user/tickets/new?type=label&id=${row.original.uuid}`}>
 						<Button variant="outline" size="icon">
 							<LifeBuoy />
 						</Button>

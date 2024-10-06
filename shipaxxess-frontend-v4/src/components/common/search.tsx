@@ -14,26 +14,41 @@ import { cn } from "@client/lib/utils";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Labels } from "@shipaxxess/shipaxxess-zod-v4";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
-const Search = ({ type, typesQuery }: { type?: string | null; typesQuery?: UseQueryResult<TypesSelectModel[]> }) => {
+const Search = ({
+	type,
+	typesQuery,
+	onSubmit,
+}: {
+	type?: string | null;
+	typesQuery?: UseQueryResult<TypesSelectModel[]>;
+	onSubmit: (values: Labels.SEARCHZODSCHEMA) => void;
+}) => {
 	const form = useForm<Labels.SEARCHZODSCHEMA>({
 		defaultValues: {
 			name: undefined,
 			uuid: undefined,
 			weight: undefined,
 			search_type: "label",
+			delivery_type: undefined,
+			from_date: undefined,
+			end_date: undefined,
 		},
 		resolver: zodResolver(Labels.SEARCHZODSCHEMA),
 	});
 
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const submit = async (values: Labels.SEARCHZODSCHEMA) => {
-		console.log(values);
+		onSubmit(values);
+		// Pass form values to parent component
+		setIsDialogOpen(false);
 	};
 
 	return (
-		<Dialog>
+		<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 			<DialogTrigger asChild>
-				<Button size="icon" variant="outline">
+				<Button size="icon" variant="outline" onClick={() => setIsDialogOpen(true)}>
 					<SearchIcon />
 				</Button>
 			</DialogTrigger>
@@ -129,7 +144,7 @@ const Search = ({ type, typesQuery }: { type?: string | null; typesQuery?: UseQu
 											{typesQuery && (
 												<FormField
 													control={form.control}
-													name="delivery_id"
+													name="delivery_type"
 													render={({ field }) => {
 														return (
 															<FormItem>
@@ -148,7 +163,7 @@ const Search = ({ type, typesQuery }: { type?: string | null; typesQuery?: UseQu
 																		)}
 																		{typesQuery.data?.map((nod) => {
 																			return (
-																				<SelectItem key={nod.id} value={nod.id.toString()}>
+																				<SelectItem key={nod.id} value={nod.label}>
 																					{nod.label}
 																				</SelectItem>
 																			);

@@ -44,7 +44,7 @@ const TopPayments: React.FC<TopPaymentsProps> = ({ payments }) => {
     }, {} as Record<string, number>);
 
     // Group payments by month
-    payments.forEach(payment => {
+    payments?.forEach(payment => {
         const month = new Date(payment.date).toLocaleString('default', { month: 'short', year: 'numeric' });
         if (paymentsByMonth[month] !== undefined) {
             paymentsByMonth[month] += payment.amount;

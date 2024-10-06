@@ -11,13 +11,14 @@ export const ticketsColumns = (timezone: string) =>
 	[
 		{
 			accessorKey: "title",
-			header: ({ column }:any) => {
+			header: ({ column }) => {
 				return (
 					<Button
-					  className="px-0 whitespace-nowrap"
-					  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-					  Ticket Title
-					  <ArrowUpDown className="w-4 h-4 ml-2" />
+						className="px-0 whitespace-nowrap"
+						variant="ghost"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+						Ticket Title
+						<ArrowUpDown className="w-4 h-4 ml-2" />
 					</Button>
 				);
 			},
@@ -26,49 +27,52 @@ export const ticketsColumns = (timezone: string) =>
 		},
 		{
 			accessorKey: "type",
-			header: ({ column }:any) => {
+			header: ({ column }) => {
 				return (
 					<Button
-					  className="px-0 whitespace-nowrap"
-					  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-					  Ticket Title
-					  <ArrowUpDown className="w-4 h-4 ml-2" />
+						className="px-0 whitespace-nowrap"
+						variant="ghost"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+						Type
+						<ArrowUpDown className="w-4 h-4 ml-2" />
 					</Button>
 				);
 			},
-			cell: ({ row }:any) => <span className="capitalize">{row.original.type}</span>,
+			cell: ({ row }) => <span className="capitalize">{row.original.type}</span>,
 			enableSorting: true,
 			enableHiding: true,
 		},
 		{
 			accessorKey: "status",
-			header: ({ column }:any) => {
+			header: ({ column }) => {
 				return (
 					<Button
-					  className="px-0 whitespace-nowrap"
-					  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-					  Ticket Title
-					  <ArrowUpDown className="w-4 h-4 ml-2" />
+						className="px-0 whitespace-nowrap"
+						variant="ghost"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+						Status
+						<ArrowUpDown className="w-4 h-4 ml-2" />
 					</Button>
 				);
 			},
-			cell: ({ row }:any) => <Badge>{row.original.status}</Badge>,
+			cell: ({ row }) => <Badge>{row.original.status}</Badge>,
 			enableSorting: true,
 			enableHiding: true,
 		},
 		{
 			accessorKey: "created_at",
-			header: ({ column }:any) => {
+			header: ({ column }) => {
 				return (
 					<Button
-					  className="px-0 whitespace-nowrap"
-					  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-					  Ticket Title
-					  <ArrowUpDown className="w-4 h-4 ml-2" />
+						className="px-0 whitespace-nowrap"
+						variant="ghost"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+						Created At
+						<ArrowUpDown className="w-4 h-4 ml-2" />
 					</Button>
 				);
 			},
-			cell: ({ row }:any) => (
+			cell: ({ row }) => (
 				<span className="whitespace-nowrap">
 					{moment.utc(row.original.created_at).tz(timezone).format(app.time.format)}
 				</span>
@@ -80,7 +84,7 @@ export const ticketsColumns = (timezone: string) =>
 			id: "action",
 			enableSorting: false,
 			enableHiding: false,
-			cell: ({ row }:any) => (
+			cell: ({ row }) => (
 				<div className="flex justify-end pr-12">
 					<Link to={`/tickets/${row.original.uuid}`}>
 						<Button className="gap-1" variant="outline">

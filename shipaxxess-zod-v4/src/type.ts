@@ -4,7 +4,7 @@ export const ZODSCHEMA = z.object({
 	label: z.string(),
 	value: z.string(),
 	unit: z.enum(["oz", "lb"]),
-	type: z.enum(["usps", "ups"]),
+	type: z.enum(["usps", "ups", "fedex"]),
 });
 
 export type ZODSCHEMA = z.infer<typeof ZODSCHEMA>;
@@ -17,7 +17,7 @@ export const CREATESCHEMA = z.object({
 	label: z.string(),
 	value: z.string(),
 	unit: z.enum(["oz", "lb"]),
-	type: z.enum(["usps", "ups"]),
+	type: z.enum(["usps", "ups", "fedex"]),
 });
 
 export type CREATESCHEMA = z.infer<typeof CREATESCHEMA>;

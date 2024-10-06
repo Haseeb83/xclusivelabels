@@ -5,9 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoading } from "@client/hooks/useLoading";
 import { api } from "@client/lib/api";
 import { Link, useNavigate } from "react-router-dom";
-
+import { toast } from "sonner";
 import { Signup } from "@shipaxxess/shipaxxess-zod-v4";
-
 type SignUpFormProps = {
 	setInboxView: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -40,16 +39,20 @@ const SignUpFormComponent = ({ setInboxView }: SignUpFormProps) => {
 		}
 
 		const res = await api.url("/signup_user").post(values);
-		const data = await res.json<{ code: number }>();
+		const data = await res.json<{ code: number,message: string }>();
+
+		console.log(data);
 
 		if (data.code === 1004) {
 			api.showSuccessToast();
 			setInboxView(true);
 			navigate(`/signup?email_address=${values.email_address}`);
 			return;
-		}
+		}else{
 
-		api.showErrorToast();
+			toast.error(data.message)
+		}
+		api.showErrorToast(	);
 		setIsLoading(false);
 	};
 

@@ -36,7 +36,7 @@ const UsersAdminPage = () => {
 					title="Users"
 					render={
 						<>
-							<Search />
+							<Search onSubmit={() => {}} />
 							<ToggleColumns />
 						</>
 					}

@@ -14,6 +14,14 @@ import { drizzle } from "drizzle-orm/d1";
 import PDFMerger from "pdf-merger-js";
 import { v4 } from "uuid";
 
+
+const getValueFromServiceToken = (token: any) => {
+	if (token === "usps_priority") return "priority";
+	if (token === "usps_express") return "express";
+	if (token === "usps_firstclass") return "firstclass";
+	// add the possible values for future
+};
+
 export class LabelManager {
 	private labels: LabelsInsertModel[] = [];
 	private pdfs: PDFInsertModel[] = [];
@@ -31,7 +39,7 @@ export class LabelManager {
 		log("Label manager is ready.");
 	}
 
-	haveGrithOk(height: number, length: number, width: number, type: "ups" | "usps") {
+	haveGrithOk(height: number, length: number, width: number, type: "ups" | "usps" | "fedex") {
 		const isGirthOk = girth([height, length, width]);
 
 		if (type === "ups" && isGirthOk > config.packages.ups_max_girth) {
@@ -49,8 +57,15 @@ export class LabelManager {
 		return await drizzle(this.env.DB).select().from(users).where(eq(users.id, user_id)).get();
 	}
 
-	async getWeightData(type: "usps" | "ups", type_id: number, weight: number) {
-		return await getWeight(this.env.DB, { type, type_id, weight });
+	async getWeightData(
+		type: "usps" | "ups" | "fedex",
+		type_id: number,
+		weight: number,
+		width: number,
+		height: number,
+		length: number,
+	) {
+		return await getWeight(this.env.DB, { type, type_id, weight, width, height, length });
 	}
 
 	async getBatchData(batch_id: number) {
@@ -115,7 +130,7 @@ export class LabelManager {
 		log("Saved into cron table.");
 	}
 
-	async saveIntoLabelTable() { }
+	async saveIntoLabelTable() {}
 
 	async saveIntoLabelTableWithDrizzleBatch() {
 		await drizzle(this.env.DB).batch(
@@ -125,7 +140,7 @@ export class LabelManager {
 		log("Saved into label table.");
 	}
 
-	async chargeUserForLabel() { }
+	async chargeUserForLabel() {}
 
 	async chargeUserForBatch(user: UsersSelectModel, user_cost: number, total_labels: number) {
 		await drizzle(this.env.DB)
@@ -169,13 +184,12 @@ export class LabelManager {
 	}
 
 	async generateUSPSLabel(label: LabelsSelectModel) {
-
 		console.log("label", label);
 		const req = await fetch(`${this.settings["label_host"]}/api/label/generate`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", "x-api-key": this.settings["label_apikey"] },
 			body: JSON.stringify({
-				type: label.type_value,
+				type: getValueFromServiceToken(label.type_value),
 				weight: label.package_weight,
 				date: label.shipping_date,
 				fromCountry: label.sender_country,
@@ -201,7 +215,6 @@ export class LabelManager {
 
 		var payload: ApiResponseProps;
 
-
 		try {
 			payload = (await req.json()) as ApiResponseProps;
 		} catch (err) {
@@ -211,9 +224,7 @@ export class LabelManager {
 
 		if (!req.ok) {
 			this.crons.push({ uuid: label.uuid, message: payload.message });
-
 		}
-
 
 		return payload;
 	}
@@ -223,11 +234,12 @@ export class LabelManager {
 		recipient: Address.UUIDSCHEMA,
 		costs: { user: number; reseller: number },
 	) {
+		log(`${batch.type_value} ======`);
 		const req = await fetch(`${this.settings["label_host"]}/api/label/generate`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", "x-api-key": this.settings["label_apikey"] },
 			body: JSON.stringify({
-				type: batch.type_value,
+				type: getValueFromServiceToken(batch.type_value),
 				weight: batch.package_weight,
 				date: batch.shipping_date,
 				fromCountry: batch.sender_country,
@@ -250,10 +262,10 @@ export class LabelManager {
 		});
 		log("Generated USPS label.");
 
-		var payload: ApiResponseProps;
+		var payload: any;
 
 		try {
-			payload = (await req.json()) as ApiResponseProps;
+			payload = (await req.json()) as any;
 		} catch (err) {
 			payload = { message: (err as Error).message, payload: {} };
 		}
@@ -262,7 +274,68 @@ export class LabelManager {
 		if (!req.ok) {
 			this.crons.push({ uuid: recipient.uuid, message: payload.message });
 		}
+		console.log(payload.payload);
+		this.pushLabelToPrivateArray(
+			batch,
+			recipient,
+			{
+				code: req.ok && payload.payload.code ? payload.payload.code : null,
+				id: req.ok && payload.payload.id ? payload.payload.id : null,
+				pdf: req.ok && payload.payload.pdf ? payload.payload.pdf.split("/")[4] : "",
+				status: req.ok ? "awaiting" : "pending",
+				message: payload.message,
+			},
+			costs,
+		);
 
+		log("Pushed label to private array.");
+	}
+	async generateFedexLabelFromBatch(
+		batch: BatchsSelectModel,
+		recipient: Address.UUIDSCHEMA,
+		costs: { user: number; reseller: number },
+	) {
+		log(`${batch.type_value} ======`);
+		const req = await fetch(`${this.settings["label_host"]}/api/label/generate-fedex`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json", "x-api-key": this.settings["label_apikey"] },
+			body: JSON.stringify({
+				type: getValueFromServiceToken(batch.type_value),
+				weight: batch.package_weight,
+				date: batch.shipping_date,
+				fromCountry: batch.sender_country,
+				fromName: batch.sender_full_name,
+				fromRefNumber: batch.sender_company_name,
+				fromStreetNumber: batch.sender_street_one,
+				fromStreetNumber2: batch.sender_street_two,
+				fromZip: batch.sender_zip,
+				fromCity: batch.sender_city,
+				fromState: batch.sender_state,
+				toCountry: recipient.country,
+				toName: recipient.full_name,
+				toRefNumber: recipient.company_name,
+				toStreetNumber: recipient.street_one,
+				toStreetNumber2: recipient.street_two,
+				toZip: recipient.zip,
+				toCity: recipient.city,
+				toState: recipient.state,
+			}),
+		});
+		log("Generated Fedex label.");
+
+		var payload: any;
+
+		try {
+			payload = (await req.json()) as any;
+		} catch (err) {
+			payload = { message: (err as Error).message, payload: {} };
+		}
+		log(`Parsed Fedex label. Payload: ${payload.message}`);
+
+		if (!req.ok) {
+			this.crons.push({ uuid: recipient.uuid, message: payload.message });
+		}
+		console.log(payload.payload);
 		this.pushLabelToPrivateArray(
 			batch,
 			recipient,
@@ -284,7 +357,7 @@ export class LabelManager {
 			method: "POST",
 			headers: { "Content-Type": "application/json", "x-api-key": this.settings["label_apikey"] },
 			body: JSON.stringify({
-				type: label.type_value,
+				type: getValueFromServiceToken(label.type_value),
 				weight: label.package_weight,
 				height: label.package_height + 2,
 				width: label.package_width + 2,
@@ -325,17 +398,64 @@ export class LabelManager {
 
 		return payload;
 	}
+	async generateFEDEXLabel(label: LabelsSelectModel) {
+		const req = await fetch(`${this.settings["label_host"]}/api/label/generate-fedex`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json", "x-api-key": this.settings["label_apikey"] },
+			body: JSON.stringify({
+				type: getValueFromServiceToken(label.type_value),
+				weight: label.package_weight,
+				height: label.package_height + 2,
+				width: label.package_width + 2,
+				length: label.package_length + 2,
+				saturday: label.saturday,
+				signature: label.signature,
+				date: label.shipping_date,
+				fromName: label.sender_full_name,
+				fromCompany: label.sender_company_name,
+				fromStreetNumber: label.sender_street_one,
+				fromStreetNumber2: label.sender_street_two,
+				fromZip: label.sender_zip,
+				fromCity: label.sender_city,
+				fromState: label.sender_state,
+				toName: label.recipent_full_name,
+				toCompany: label.recipent_company_name,
+				toStreetNumber: label.recipent_street_one,
+				toStreetNumber2: label.recipent_street_two,
+				toZip: label.recipent_zip,
+				toCity: label.recipent_city,
+				toState: label.recipent_state,
+			}),
+		});
+		log("Generated Fedex label.");
+
+		var payload: ApiUpsResponseProps;
+
+		try {
+			payload = (await req.json()) as ApiUpsResponseProps;
+		} catch (err) {
+			payload = { message: (err as Error).message, payload: {} };
+		}
+		log(`Parsed Fedex label. Payload: ${payload.message}`);
+
+		if (!req.ok) {
+			this.crons.push({ uuid: label.uuid, message: payload.message });
+		}
+
+		return payload;
+	}
 
 	async generateUPSLabelFromBatch(
 		batch: BatchsSelectModel,
 		recipient: Address.UUIDSCHEMA,
 		costs: { user: number; reseller: number },
 	) {
+		console.log(batch, ` --------------> sdgsdf`);
 		const req = await fetch(`${this.settings["label_host"]}/api/label/generate-ups`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", "x-api-key": this.settings["label_apikey"] },
 			body: JSON.stringify({
-				type: batch.type_value,
+				type: getValueFromServiceToken(batch.type_value),
 				weight: batch.package_weight,
 				height: batch.package_height + 2,
 				width: batch.package_width + 2,
@@ -362,7 +482,7 @@ export class LabelManager {
 			}),
 		});
 		log("Generated UPS label.");
-
+		console.log(await req.json());
 		var payload: ApiUpsResponseProps;
 
 		try {
@@ -370,7 +490,7 @@ export class LabelManager {
 		} catch (err) {
 			payload = { message: (err as Error).message, payload: {} };
 		}
-		log("Parsed UPS label. Payload: " + JSON.stringify(payload));
+		log("Parsed UPS label. Payload:----------> " + JSON.stringify(payload));
 
 		if (!req.ok) {
 			this.crons.push({ uuid: recipient.uuid, message: payload.message });
@@ -412,6 +532,16 @@ export class LabelManager {
 
 		return buffer;
 	}
+	async downloadFedexLabel(pdfkey: string) {
+		const req = await fetch(`${this.settings["label_host"]}/labels/fedex/${pdfkey}`);
+		const buffer = await req.arrayBuffer();
+		log("Downloaded FEDEX label.");
+
+		await this.env.LABELS_BUCKET.put(pdfkey, buffer);
+		log("Uploaded FEDEX label to R2.");
+
+		return buffer;
+	}
 
 	async downloadMergePdf(filename: string, merger: PDFMerger) {
 		const buffer = await merger.saveAsBuffer();
@@ -422,7 +552,9 @@ export class LabelManager {
 		return buffer;
 	}
 
-	async notifyBatchDownloadCompleteEvent(batch_uuid: string) { }
+	async notifyBatchDownloadCompleteEvent(batch_uuid: string) {
+		console.log("notifyBatchDownloadCompleteEvent", batch_uuid);
+	}
 
 	async updateBatchFirstTrackingNumber(batch_uuid: string) {
 		return await drizzle(this.env.DB)
@@ -473,8 +605,23 @@ export class LabelManager {
 			.where(eq(labels.id, id))
 			.execute();
 	}
+	async updateFEDEXLabelStatus({ payload, id }: { payload: ApiUpsResponseProps; id: number }) {
+		return await drizzle(this.env.DB)
+			.update(labels)
+			.set({
+				remote_tracking_number: payload.payload.tracking,
+				remote_pdf_link: payload.payload.pdf!.split("/")[5] || "",
+				remote_pdf_r2_link: payload.payload.pdf!.split("/")[5] || "",
+				status_label: "awaiting",
+				status_message: payload.message,
+			})
+			.where(eq(labels.id, id))
+			.execute();
+	}
 
 	async updateLabelDownloadStatusFromDrizzleBatch(uuids: string[]) {
+		log("---------> hi");
+		log(`${uuids}--------> d`);
 		return await drizzle(this.env.DB).batch(
 			// @ts-expect-error type error
 			uuids.map((uuid) =>

@@ -1,7 +1,10 @@
 import { Hono } from "hono";
+import { CouponsAdmin } from "./coupon";
 import { CronsAdmin } from "./crons";
 import { DashboardAdmin } from "./dashboard";
+import { DiscountAdmin } from "./discount";
 import { LabelsAdmin } from "./labels";
+import { NoticeAdmin } from "./notice";
 import { AdminNotification } from "./notifcaitons";
 import { PaymentsAdmin } from "./payments";
 import { RefundAdmin } from "./refunds";
@@ -11,7 +14,6 @@ import { TicketsAdmin } from "./tickets";
 import { TypesAdmin } from "./types";
 import { UsersAdmin } from "./users";
 import { WeightsAdmin } from "./weights";
-
 const admin = new Hono<App>();
 
 // Status routes
@@ -23,6 +25,10 @@ admin.post("/labels/download", LabelsAdmin.DownloadSingle);
 
 admin.get("/labels/batch/:uuid", LabelsAdmin.Get);
 admin.post("/labels/batch/download", LabelsAdmin.DownloadBatch);
+
+// Notice routes
+admin.post("/notice", NoticeAdmin.PostGlobalNotice);
+admin.post("/notice/:uuid", NoticeAdmin.PostSingleNotification);
 
 // Payments routes
 admin.get("/payments", PaymentsAdmin.GetAll);
@@ -83,6 +89,15 @@ admin.delete("/unsubscribe", AdminNotification.Unsubscribe);
 admin.get("/subscription", AdminNotification.subscriptionStatus);
 admin.get("/dashboard", DashboardAdmin.Get);
 
+// Coupon routes
+admin.post("/coupons", CouponsAdmin.Create);
+admin.get("/coupons", CouponsAdmin.GetAll);
+admin.get("/couponsByCode/:code", CouponsAdmin.GetCouponByCode);
+admin.get("/coupons/:id", CouponsAdmin.Get);
+admin.delete("/coupons", CouponsAdmin.Delete);
+admin.patch("/coupons", CouponsAdmin.Edit);
 
+// Discount routes
+admin.get("/discounts", DiscountAdmin.GetAll);
+admin.post("/discounts", DiscountAdmin.Edit);
 export { admin };
-

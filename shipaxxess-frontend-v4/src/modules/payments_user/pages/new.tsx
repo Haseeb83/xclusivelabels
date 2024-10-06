@@ -22,8 +22,8 @@ const NewPaymentUserPage = () => {
 				<Title title="Add Funds" />
 				<Breadcrumb
 					items={[
-						{ title: "Payments", link: "/payments", icon: <CreditCard size={16} /> },
-						{ title: "Add Funds", link: "/payments/new" },
+						{ title: "Payments", link: "/user/payments", icon: <CreditCard size={16} /> },
+						{ title: "Add Funds", link: "/user/payments/new" },
 					]}
 				/>
 

@@ -18,6 +18,18 @@ const app = new Hono<App>({ strict: true }).basePath("/v1");
  */
 app.use("*", logger());
 app.use("*", cors());
+
+origin: [
+    'http://localhost:5173',              // Local development origin
+    'https://xclusivelabels-com.pages.dev', // Deployed version origin
+    'https://xclusivelabels.com',         // Deployed version origin
+    'https://staging-with-transfer.pages.dev',
+    'https://58316e0e.staging-with-transfer.pages.dev'
+    'https://shipaxxess-com-1.pages.dev'
+
+],
+credentials: true,
+}));
 app.use("*", prettyJSON());
 app.use("/user/*", jwt({ secret: config.jwt.secret }));
 app.use("/admin/*", jwt({ secret: config.jwt.admin }));

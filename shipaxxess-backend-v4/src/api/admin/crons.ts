@@ -54,6 +54,15 @@ const Reprocess = async (c: Context<App, "/:id">) => {
 	const manager = new LabelManager(c.env, settings);
 
 	if (label.type === "usps") {
+		// check if the label is already generated
+
+		if (label.status_label === "generated") {
+			throw exception({ message: "Label already generated", code: 400 });
+		}
+		if (label.status_label === "pending") {
+			throw exception({ message: "Label is pending", code: 400 });
+		}
+
 		const payload = await manager.generateUSPSLabel(label);
 
 		if (!payload.payload.code || !payload.payload.id || !payload.payload.pdf) {
@@ -76,7 +85,7 @@ const Reprocess = async (c: Context<App, "/:id">) => {
 		const mergedPdf = await merger.saveAsBuffer();
 
 		await c.env.LABELS_BUCKET.put(`${label.batch_uuid}.pdf`, mergedPdf);
-	} else {
+	} else if (label.type === "ups") {
 		const payload = await manager.generateUPSLabel(label);
 
 		if (!payload.payload.tracking || !payload.payload.id || !payload.payload.pdf) {
@@ -86,6 +95,29 @@ const Reprocess = async (c: Context<App, "/:id">) => {
 		await manager.updateUPSLabelStatus({ payload, id: label.id });
 
 		const buffer = await manager.downloadUPSLabel(payload.payload.pdf.split("/")[5]);
+		const r2 = await c.env.LABELS_BUCKET.get(`${label.batch_uuid}.pdf`);
+		if (!r2) throw exception({ message: "Batch label not found", code: 404 });
+		const batchBuffer = await r2.arrayBuffer();
+		if (!batchBuffer) throw exception({ message: "Batch label not found", code: 404 });
+
+		const merger = new PDFMerger();
+
+		await merger.add(batchBuffer);
+		await merger.add(buffer);
+
+		const mergedPdf = await merger.saveAsBuffer();
+
+		await c.env.LABELS_BUCKET.put(`${label.batch_uuid}.pdf`, mergedPdf);
+	} else {
+		const payload = await manager.generateFEDEXLabel(label);
+
+		if (!payload.payload.tracking || !payload.payload.id || !payload.payload.pdf) {
+			throw exception({ message: payload.message, code: 400 });
+		}
+
+		await manager.updateFEDEXLabelStatus({ payload, id: label.id });
+
+		const buffer = await manager.downloadFedexLabel(payload.payload.pdf.split("/")[5]);
 		const r2 = await c.env.LABELS_BUCKET.get(`${label.batch_uuid}.pdf`);
 		if (!r2) throw exception({ message: "Batch label not found", code: 404 });
 		const batchBuffer = await r2.arrayBuffer();

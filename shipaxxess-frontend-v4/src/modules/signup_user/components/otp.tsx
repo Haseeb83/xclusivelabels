@@ -2,38 +2,50 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@client/components/ui/input";
 import { useLoading } from "@client/hooks/useLoading";
 import { api } from "@client/lib/api";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Verify } from "@shipaxxess/shipaxxess-zod-v4";
-import { useForm } from "react-hook-form";
+import { FieldValues, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-
 const Otp = ({ query }: { query: URLSearchParams }) => {
 	const navigate = useNavigate();
 
-	const { button, setIsLoading } = useLoading({ label: "Submit & Verify", className: "w-full mt-8" });
+	const { button, setIsLoading } = useLoading({
+		label: "Submit & Verify",
+		className: "w-full mt-8",
+	});
 
 	const form = useForm<Verify.ZODSCHEMA>({
 		defaultValues: {
 			type: "email_verification",
 			email_address: query.get("email_address") || "",
 			code: "",
+			rememberMe: false,
 		},
-		resolver: zodResolver(Verify.ZODSCHEMA),
+		// resolver: zodResolver(Verify.ZODSCHEMA),
 	});
 
-	const onSubmit = async (values: Verify.ZODSCHEMA) => {
-		const req = await api.url("/verify_email").post(values);
-		const data = await req.json<{ success: boolean; token: string }>();
+	const submit = async (values: FieldValues) => {
+		console.log("hello")
+		setIsLoading(true); // Start loading when the form is submitted
 
-		if (data.token) {
-			api.showSuccessToast();
-			localStorage.setItem("token", data.token);
-			navigate("/dashboard");
-			return;
+
+		try {
+			const req = await api.url("/verify_email").post(values);
+			const data = await req.json<{ success: boolean; token: string }>();
+
+			if (data.token) {
+				api.showSuccessToast();
+				localStorage.setItem("token", data.token);
+				navigate("/user/dashboard");
+				return;
+			}
+
+			api.showErrorToast();
+		} catch (error) {
+			api.showErrorToast();
+			console.error("Error during email verification:", error);
+		} finally {
+			setIsLoading(false); // Stop loading after request completes
 		}
-
-		api.showErrorToast();
-		setIsLoading(false);
 	};
 
 	return (
@@ -46,7 +58,7 @@ const Otp = ({ query }: { query: URLSearchParams }) => {
 			</div>
 
 			<Form {...form}>
-				<form className="w-full" onSubmit={form.handleSubmit(onSubmit)}>
+				<form className="w-full" onSubmit={form.handleSubmit(submit)}>
 					<FormField
 						control={form.control}
 						name="code"
@@ -87,7 +99,10 @@ const Otp = ({ query }: { query: URLSearchParams }) => {
 						)}
 					/>
 
-					{button}
+			
+				
+						{button}
+			
 				</form>
 			</Form>
 		</div>

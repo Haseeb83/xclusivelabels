@@ -17,51 +17,27 @@ import { numberWithCommas } from "@client/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { ScrollArea } from "../ui/scroll-area";
 import moment from "moment-timezone";
+import PushNotificationComponent from "./push";
 import { UsersSelectModel } from "@db/users";
 import { UseQueryResult } from "@tanstack/react-query";
 import { useNotificationsQuery, useMarkAsReadMutation } from "@client/hooks/useNotificationsQuery";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { onMessage } from "firebase/messaging";
-import { messaging } from "@client/firebase/firebaseConfig";
+import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { TimezoneContext } from "@client/contexts/timezone";
 
 const Header = ({ items, user }: { items: HeaderProps[]; user: UseQueryResult<UsersSelectModel> }) => {
-	const notificationsQuery = useNotificationsQuery();
 
-	// Example function definitions for bell notification
-	const bellRing = () => {
-		// This function is called when there are unread notifications
-	};
-
-	const resetBell = () => {
-		// This function is called when all notifications are marked as read
-	};
-
-	onMessage(messaging, (payload: any) => {
-		const { title, body, icon } = payload.notification;
-		console.log("Notification received", payload);
-
-		const message = `${title} ${body}`;
-
-		// Show notification toast
-		toast.info(message, {
-			duration: 5000,
-			position: "top-right",
-			icon: icon ? <img src={icon} alt="Notification Icon" /> : undefined,
-		});
-
-		// Refetch notifications
-		notificationsQuery.refetch();
-	});
-
+	
 	return (
 		<header
 			className={`sticky h-16 border-b border-primary/5 shadow bg-white flex items-center px-4 justify-between z-40 ${
 				app.mode === "dev" ? "top-9" : "top-0"
 			}`}>
 			<ProfileDropDownMenu items={items} userQuery={user} />
-			<NotificationsComponent userQuery={user} bellRing={bellRing} resetRing={resetBell} />
+
+			{/* <NotificationsComponent userQuery={user} bellRing={bellRing} resetRing={resetBell} /> */}
+			<NotificationsComponent userQuery={user} />
 		</header>
 	);
 };
@@ -147,26 +123,19 @@ const ProfileDropDownMenu = ({
 	);
 };
 
-const NotificationsComponent = ({
-	userQuery,
-	bellRing,
-	resetRing,
-}: {
-	userQuery: UseQueryResult<UsersSelectModel>;
-	bellRing: () => void;
-	resetRing: () => void;
-}) => {
+const NotificationsComponent = ({ userQuery }: { userQuery: UseQueryResult<UsersSelectModel> }) => {
 	const notifications: NotificationProps[] = [];
 	const notificationsQuery = useNotificationsQuery();
 	const [unreadNotifcationCount, setUnreadNotificationCount] = useState(0);
 	const markAsReadMutation = useMarkAsReadMutation();
-
-	notificationsQuery.data?.forEach((notification: { title: any; description: any; created_at: any; read: any }) => {
+	const [showBellDot, setShowBellDot] = useState(false);
+	notificationsQuery.data?.forEach((notification: { title: any; description: any; created_at: any; read: boolean, box_color: string  }) => {
 		notifications.push({
 			title: notification.title,
 			description: notification.description,
 			created_at: notification.created_at,
-			read: notification.read,
+			read: Boolean(notification.read),
+			box_color: notification.box_color,
 		});
 	});
 
@@ -174,22 +143,76 @@ const NotificationsComponent = ({
 		if (notificationsQuery.isSuccess) {
 			const unreadNotifications = notificationsQuery.data?.filter((notification: { read: any }) => !notification.read);
 			if (unreadNotifications?.length) {
-				bellRing();
+				setShowBellDot(true);
 			} else {
-				resetRing();
+				setShowBellDot(false);
 			}
 		}
-	}, [notificationsQuery.data, bellRing, resetRing]);
+	}, [notificationsQuery.data]);
+
+    const [lastSeenNotificationId, setLastSeenNotificationId] = useState<number | null>(null);
+
+    useEffect(() => {
+        // Fetch the last seen notification ID from localStorage (or similar)
+        const storedLastNotificationId = localStorage.getItem("lastSeenNotificationId");
+
+        // If present, set it as the initial state
+        if (storedLastNotificationId) {
+            setLastSeenNotificationId(parseInt(storedLastNotificationId, 10));
+        }
+    }, []);
+
+
+	useEffect(() => {
+        // When notifications arrive
+        if (notificationsQuery.isSuccess) {
+            const newNotifications = notificationsQuery.data?.filter(
+                (notification: { read: any; id: number }) => !notification.read
+            );
+
+            if (newNotifications.length > 0) {
+                const latestNotification = newNotifications[0]; // Assuming the list is ordered by time (or find the latest)
+
+                // Compare the latest unread notification's ID with the last seen ID
+                if (!lastSeenNotificationId || latestNotification.id > lastSeenNotificationId) {
+                    // Show the toast notification
+                    toast.info(latestNotification.title, {
+						position:"top-center",
+						closeButton: true,
+                        description: latestNotification.description,
+                        duration: 5000, 
+						style: {
+							background: latestNotification.box_color || "white", // Custom background color
+							// Ensure proper color contrast for readability
+							color: latestNotification.box_color && 
+								['white', 'yellow'].includes(latestNotification.box_color.toLowerCase()) 
+								? 'black' : 'white',
+						  },
+                    });
+
+                    // Update the last seen notification ID in state and localStorage
+                    setLastSeenNotificationId(latestNotification.id);
+                    localStorage.setItem("lastSeenNotificationId", latestNotification.id.toString());
+                }
+            }
+        }
+    }, [notificationsQuery.data, lastSeenNotificationId]);
+
+
+
+
 
 	const markAllAsRead = async () => {
 		await markAsReadMutation.mutateAsync();
-		resetRing();
+		setShowBellDot(false);
+		// update the notification locally
 		notificationsQuery.data?.forEach((notification: { read: boolean }) => {
 			notification.read = true;
 		});
 		setUnreadNotificationCount(0);
 	};
 
+	// count unread notifications
 	useEffect(() => {
 		if (notificationsQuery.isSuccess) {
 			const unreadNotifications = notificationsQuery.data?.filter((notification: { read: any }) => !notification.read);
@@ -197,17 +220,20 @@ const NotificationsComponent = ({
 		}
 	}, [notificationsQuery.data]);
 
+	const {timezone} = useContext(TimezoneContext);
+
+
 	return (
 		<div className="flex items-center gap-4">
 			{userQuery.data?.isadmin === false && (
 				<>
-					<Link to="/orders/new">
+					<Link to="/user/orders/new">
 						<Button variant="outline" className="gap-2">
 							<Tags size={16} /> Create New Label
 						</Button>
 					</Link>
 
-					<Link to="/payments/new">
+					<Link to="/user/payments/new">
 						<Button variant="outline" className="gap-2">
 							<DollarSign size={16} /> Add Funds
 						</Button>
@@ -217,9 +243,7 @@ const NotificationsComponent = ({
 
 			<DropdownMenu>
 				<DropdownMenuTrigger className="p-2 rounded outline-none bg-primary/5 hover:ring-2 hover:ring-primary/10">
-					<div className="relative">
-						{unreadNotifcationCount > 0 ? <BellDot /> : <Bell />}
-					</div>
+					<div className="relative">{showBellDot ? <BellDot /> : <Bell />}</div>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="absolute p-0 -right-5 ">
 					<Card className="w-[400px] rounded-lg overflow-hidden">
@@ -229,47 +253,46 @@ const NotificationsComponent = ({
 							<CardDescription>You have {unreadNotifcationCount} unread messages.</CardDescription>
 						</CardHeader>
 						<CardContent className="grid gap-4">
-							<ScrollArea className="h-[300px] w-full rounded-md">
+							<PushNotificationComponent isEnabled={true}/>
+							<ScrollArea className="max-h-[300px] mt-2">
 								{notificationsQuery.isLoading && (
-									<div className="flex flex-col gap-2">
-										<Skeleton className="w-full h-[70px]" />
-										<Skeleton className="w-full h-[70px]" />
-										<Skeleton className="w-full h-[70px]" />
-									</div>
+									<>
+										<Skeleton className="w-full h-5" />
+										<Skeleton className="w-full h-10" />
+									</>
 								)}
+								{notifications?.map((notification, index) => (
 
-								{notificationsQuery.isSuccess &&
-									notifications.map((notification, index) => {
-										return (
-											<Card key={index} className="w-full rounded-lg border">
-												<CardHeader className="w-full items-start justify-between">
-													<h1 className="font-medium text-md">{notification.title}</h1>
-													<CardDescription>{notification.description}</CardDescription>
-												</CardHeader>
-
-												<CardFooter className="w-full items-center justify-between">
-													<p className="text-xs font-normal leading-none text-muted-foreground">
-														{moment(notification.created_at).fromNow()}
-													</p>
-													{notification.read === false && (
-														<Button
-															variant="outline"
-															size="sm"
-															className="text-xs py-0 h-7"
-															onClick={() => markAsReadMutation.mutateAsync()}>
-															<Check size={16} />
-															Mark as Read
-														</Button>
-													)}
-												</CardFooter>
-											</Card>
-										);
-									})}
+									<div
+									style={{backgroundColor: String(notification.box_color) || "white", color: String(notification.box_color).toLowerCase() !==  "white" ? "white": "black"}}
+										key={index}
+										className=" mb-4 grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 hover:bg-primary/5 py-4 px-3 rounded-lg">
+										{!notification.read == true ? (
+											<span className="flex w-2 h-2 translate-y-1 rounded-full bg-primary" />
+										) : (
+											<span className="flex w-2 h-2 translate-y-1 rounded-full" />
+										)}
+										<div style={{color: String(notification.box_color).toLowerCase() !==  "white" ? "white"  : String(notification.box_color).toLowerCase() !==  "yellow"? "black" : "black"}} className="space-y-1">
+											<p  className="flex items-center justify-between text-sm font-medium leading-none">
+												<span>{notification.title}</span>
+												<span  className="text-xs font-light ">
+													{moment(notification.created_at).tz(timezone).fromNow()}
+												</span>
+											</p>
+											<p className="text-sm ">{notification.description}</p>
+										</div>
+									</div>
+								))}
 							</ScrollArea>
+							{notificationsQuery.data?.length === 0 && (
+								<div className="flex items-center justify-center py-8">
+									<img src="/svg/empty.svg" height={200} width={200} alt="empty svg" />
+								</div>
+							)}
 						</CardContent>
 						<CardFooter>
-							<Button variant="default" className="gap-2" onClick={() => markAllAsRead()}>
-								<Check size={16} /> Mark All as Read
+							<Button className="w-full" onClick={markAllAsRead}>
+								<Check className="w-4 h-4 mr-2" /> Mark all as read
 							</Button>
 						</CardFooter>
 					</Card>

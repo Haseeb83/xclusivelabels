@@ -34,7 +34,7 @@ const NewPaymentForm = ({ query }: { query: UseQueryResult<GatewayProps> }) => {
 
 		if (res.success) {
 			api.showSuccessToast();
-			navigate("/payments");
+			navigate("/user/payments");
 			return;
 		}
 

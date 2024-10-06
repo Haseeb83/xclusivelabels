@@ -12,7 +12,8 @@ export type HeaderProps = {
 };
 
 export type NotificationProps = {
-	[x: string]: boolean;
+	box_color:string;
+	read: boolean;
 	title: string;
 	description: string;
 	created_at: string;

@@ -58,7 +58,7 @@ const ChartsGrid: React.FC<ChartsGridProps> = ({ totalEarnings, activeRefunds })
         { name: 'Product E', sales: 3908 },
         { name: 'Product F', sales: 4800 },
     ];
-
+console.log(revenueByCategoryData);
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-lg shadow-md">
@@ -95,7 +95,7 @@ const ChartsGrid: React.FC<ChartsGridProps> = ({ totalEarnings, activeRefunds })
                         fill="#8884d8"
                         dataKey="value"
                     >
-                        {revenueByCategoryData.map((_entry, index) => (
+                        {revenueByCategoryData?.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                         ))}
                     </Pie>

@@ -36,19 +36,14 @@ const Get = async (c: Context<App, "/:uuid">) => {
 
 	const batchLabels = await model.all(labels, eq(labels.batch_uuid, batch_uuid));
 
-	return c.json({ labels: batchLabels, batch: { name: batch.name, status_refund: batch.status_refund } });
+	return c.json({ labels: batchLabels, batch: { name: batch?.name, status_refund: batch.status_refund } });
 };
 
 const Create = async (c: Context<App>) => {
-	log("Hit label batch endpoint.");
-	console.log("CENV", c);
-
 	const body = await c.req.json();
 	const parse = Labels.BATCHZODSCHEMA.parse(body);
-	log("Parsed body.");
 
 	const settings = await getSettings(c.env.DB);
-
 
 	const manager = new LabelManager(c.env, settings);
 	log("Created label manager.");
@@ -90,7 +85,6 @@ const Create = async (c: Context<App>) => {
 	const savedSender = async () => {
 		const model = new Model(c.env.DB);
 
-
 		return await model.insert(addresses, {
 			uuid: v4(),
 			user_id: user.id,
@@ -109,21 +103,41 @@ const Create = async (c: Context<App>) => {
 		log("Waiting for saved sender.");
 		c.executionCtx.waitUntil(savedSender());
 	}
-	const message = {
+	const Notifcation: INOtifcation = {
+		title: "New Label Created",
+		description: `Your label has been created successfully`,
+		user_id: user.id,
+		uuid: v4(),
+		box_color: "white",
+	};
+	// save message notification into admin notification table
+	await SaveNotifcaiton(c.env.DB, Notifcation);
+	// send email notification to user
+	const subject = `New Label Created`;
+	const emailBody = `Your label has been created successfully`;
+	c.executionCtx.waitUntil(
+		mail(c.env.DB, {
+			to: user.email_address,
+			subject: subject,
+			html: body,
+		}),
+	);
 
-	}
-	const devicetoken = await drizzle(c.env.DB).select().from(subscriptions).where(and(eq(subscriptions.user_id, user.id), eq(subscriptions.is_active, true))).all()
-	console.log("devicetoken", devicetoken)
+	const devicetoken = await drizzle(c.env.DB)
+		.select()
+		.from(subscriptions)
+		.where(and(eq(subscriptions.user_id, user.id), eq(subscriptions.is_active, true)))
+		.all();
+
 	if (devicetoken.length > 0) {
 		devicetoken.map(async (token: any) => {
 			const message = {
 				to: token.token,
 				title: "New Label",
-				body: `Your label has been created successfully`
-			}
-			await sendPushNotification(token.token, message)
-		})
-
+				body: `Your label has been submitted successfully`,
+			};
+			await sendPushNotification(token.token, message);
+		});
 	}
 
 	return c.json({ success: true, message: "We are processing your batch. Please check back later." });
@@ -213,18 +227,17 @@ const RefundAsSingle = async (c: Context<App>) => {
 const DownloadSingle = async (c: Context<App>) => {
 	const body = await c.req.json();
 	const parse = Id.ZODSCHEMA.parse(body);
-
 	const model = new Model(c.env.DB);
-
-	const label = await model.get(labels, eq(labels.id, parse.id));
+	const label = await model.get(batchs, eq(batchs.id, parse.id));
+	console.log(body, "==================");
 	if (!label) {
 		throw exception({ message: "Label not found.", code: 404 });
 	}
-	if (!label.remote_pdf_r2_link) {
+	if (!label.merge_pdf_key) {
 		throw exception({ message: "Label not ready to download.", code: 404 });
 	}
 
-	const r2data = await c.env.LABELS_BUCKET.get(label.remote_pdf_r2_link);
+	const r2data = await c.env.LABELS_BUCKET.get(label.merge_pdf_key);
 	if (!r2data) {
 		throw exception({ message: "pdf not found.", code: 404 });
 	}
@@ -232,7 +245,7 @@ const DownloadSingle = async (c: Context<App>) => {
 	return new Response(r2data.body, {
 		headers: {
 			"Content-Type": "application/pdf",
-			"Content-Disposition": `attachment; filename="${label.remote_pdf_r2_link}"`,
+			"Content-Disposition": `attachment; filename="${label.merge_pdf_key}"`,
 		},
 	});
 };
@@ -289,4 +302,141 @@ const Search = async (c: Context<App>) => {
 	return c.json({});
 };
 
-export const LabelsUser = { GetAll, Create, RefundAsBatch, Get, DownloadSingle, DownloadBatch, Search, RefundAsSingle };
+const CreateSingle = async (c: Context<App>) => {
+	const body = await c.req.json();
+	const parse = Labels.BATCHZODSCHEMA.parse(body);
+	const settings = await getSettings(c.env.DB);
+	const model = new Model(c.env.DB);
+
+	const manager = new LabelManager(c.env, settings);
+	log("Created label manager.");
+
+	if (!manager.haveGrithOk(parse.package.height, parse.package.width, parse.package.length, parse.type.type)) {
+		throw exception({ message: "Package dimensions are too large.", code: 508 });
+	}
+	log("Package dimensions are ok.");
+
+	const weight = await manager.getWeightData(
+		parse.type.type,
+		parse.type.id,
+		parse.package.weight,
+		parse.package.width,
+		parse.package.height,
+		parse.package.length,
+	);
+	if (!weight) {
+		throw exception({ message: "Weight not found.", code: 404 });
+	}
+	log("Weight is ok.");
+
+	const discountData = await model.all(discount);
+	const discountPercentage = (discountData && discountData[0]?.value) || 0;
+	const coupon = await model.get(coupons, eq(coupons.code, parse.coupon));
+
+	const total_labels = parse.recipient.length;
+	const user_cost =
+		(weight.user_cost - (weight.user_cost * (coupon?.value ? coupon?.value : discountPercentage)) / 100) * total_labels;
+	const reseller_cost = weight.reseller_cost * total_labels;
+
+	const user = await manager.getUserData(c.get("jwtPayload").id);
+	if (!user) {
+		throw exception({ message: "User not found.", code: 404 });
+	}
+	log("User is ok.");
+
+	if (user.current_balance < user_cost) {
+		throw exception({ message: "Insufficient funds.", code: 402 });
+	}
+	log("User has enough funds.");
+	if (coupon?.value) {
+		await model.update(
+			coupons, // Collection or table
+			{ usedCount: (coupon?.usedCount || 0) + 1 }, // Field to update
+			eq(coupons.code, parse.coupon), // Condition for the update
+		);
+	}
+	const batch = await manager.saveIntoBatchTable(parse, user_cost, reseller_cost, user.id);
+	log("Batch saved.");
+
+	c.executionCtx.waitUntil(manager.chargeUserForBatch(user, user_cost, total_labels));
+	c.executionCtx.waitUntil(manager.sendToBatchProcessQueue(batch.id));
+
+	log("User charged and batch sent to queue.");
+
+	const savedSender = async () => {
+		const model = new Model(c.env.DB);
+
+		return await model.insert(addresses, {
+			uuid: v4(),
+			user_id: user.id,
+			full_name: parse.sender.full_name,
+			company_name: parse.sender.company_name,
+			city: parse.sender.city,
+			zip: parse.sender.zip,
+			state: parse.sender.state,
+			street_one: parse.sender.street_one,
+			street_two: parse.sender.street_two,
+			country: parse.sender.country,
+		});
+	};
+	log("Saved sender.");
+	if (parse.saved_sender) {
+		log("Waiting for saved sender.");
+		c.executionCtx.waitUntil(savedSender());
+	}
+	const Notifcation: INOtifcation = {
+		title: "New Label Created",
+		description: `Your label has been created successfully and ready to download`,
+		user_id: user.id,
+		uuid: v4(),
+		box_color: "white",
+	};
+	// save message notification into admin notification table
+	await SaveNotifcaiton(c.env.DB, Notifcation);
+	// send email notification to user
+	const subject = `New Label Created`;
+	const emailBody = `Hi ${user.first_name}, Your label has been created successfully and ready to download
+	<p>Thanks!</p>
+	<p>The ${config.app.name} Team</p>
+	`;
+	if (user.email_address) {
+		c.executionCtx.waitUntil(
+			mail(c.env.DB, {
+				to: user.email_address,
+				subject: subject,
+				html: emailBody,
+			}),
+		);
+	}
+
+	const devicetoken = await drizzle(c.env.DB)
+		.select()
+		.from(subscriptions)
+		.where(and(eq(subscriptions.user_id, user.id), eq(subscriptions.is_active, true)))
+		.all();
+
+	if (devicetoken.length > 0) {
+		devicetoken.map(async (token: any) => {
+			const message = {
+				to: token.token,
+				title: "New Label",
+				body: `Your label has been created successfully and ready to download`,
+			};
+			await sendPushNotification(token.token, message);
+		});
+	}
+
+	return c.json({ success: true, message: "Your label is processed and ready to download " });
+};
+
+export const LabelsUser = {
+	GetAll,
+	CreateSingle,
+	Create,
+	RefundAsBatch,
+	Get,
+	DownloadSingle,
+	DownloadBatch,
+	Search,
+	RefundAsSingle,
+};

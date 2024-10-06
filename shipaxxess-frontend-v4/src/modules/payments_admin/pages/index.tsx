@@ -30,7 +30,7 @@ const PaymentsAdminPage = () => {
 					title="Payments"
 					render={
 						<>
-							<Search />
+							<Search onSubmit={() => {}} />
 							<ToggleColumns />
 						</>
 					}

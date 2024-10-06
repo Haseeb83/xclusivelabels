@@ -99,7 +99,7 @@ const Email = async (c: Context<App>) => {
 const Label = async (c: Context<App>) => {
 	const body = await c.req.json();
 	const parse = Settings.LABELTAB.parse(body);
-
+	console.log(parse);
 	await drizzle(c.env.DB).batch([
 		drizzle(c.env.DB)
 			.update(adminSettings)

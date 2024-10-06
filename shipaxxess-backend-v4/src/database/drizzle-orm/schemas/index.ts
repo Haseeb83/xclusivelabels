@@ -13,7 +13,8 @@ import { tickets } from "./tickets";
 import { types } from "./types";
 import { users } from "./users";
 import { weights } from "./weights";
-
+import { coupons } from "./coupons";
+import { discount } from "./discount";
 import { adminWeightsRelations, weightsRelations } from "./relations";
 
 export default {
@@ -34,4 +35,6 @@ export default {
 	weightsRelations,
 	adminWeights,
 	adminWeightsRelations,
+	coupons,
+	discount,
 };

@@ -26,10 +26,18 @@ export const batchLabelQueue = async (batch: MessageBatch<MessageProps>, env: Bi
 						user: batch.cost_user / batch.total_labels,
 					});
 				}
-			} else {
+			} else if (batch.type === "ups") {
 				for (const recipient of batch.recipients) {
 					// @ts-ignore lazy to change the type from zod lol :)
 					await manager.generateUPSLabelFromBatch(batch, recipient, {
+						reseller: batch.cost_reseller / batch.total_labels,
+						user: batch.cost_user / batch.total_labels,
+					});
+				}
+			} else {
+				for (const recipient of batch.recipients) {
+					// @ts-ignore lazy to change the type from zod lol :)
+					await manager.generateFedexLabelFromBatch(batch, recipient, {
 						reseller: batch.cost_reseller / batch.total_labels,
 						user: batch.cost_user / batch.total_labels,
 					});
@@ -46,6 +54,7 @@ export const batchLabelQueue = async (batch: MessageBatch<MessageProps>, env: Bi
 
 			log("label queue");
 		} catch (err) {
+			log(`label queue error====================>: ${err}`);
 			log(`label queue error: ${(err as Error).message}`);
 		}
 

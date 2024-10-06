@@ -1,55 +1,45 @@
-import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import React from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
+// const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 interface PaymentMethod {
-    gateway: string;
-    value: number;
+	gateway: string;
+	value: number;
 }
-
 interface Props {
-    paymentMethodsData: PaymentMethod[];
+	paymentMethodsBreakdownByGateway: PaymentMethod[];
 }
+const PaymentMethodsBreakdown: React.FC<Props> = ({ paymentMethodsBreakdownByGateway }) => {
+	const CATEGORY_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-const PaymentMethodsBreakdown: React.FC<Props> = ({ paymentMethodsData }) => {
-    // Calculate the total value of all payment methods
-    const totalAmount = paymentMethodsData.reduce((acc, curr) => acc + curr.value, 0);
-
-    return (
-        <div className="bg-white md:col-span-2 p-4 rounded-lg shadow-md">
-            <h2 className="text-lg font-bold mb-2">Payment Methods Breakdown</h2>
-            <div className="mb-4">
-                <p>Total Amount: ${totalAmount.toFixed(2)}</p>
-                <ul>
-                    {paymentMethodsData.map((method, index) => (
-                        <li key={index}>
-                            {method.gateway}: {((method.value / totalAmount) * 100).toFixed(2)}% (${method.value.toFixed(2)})
-                        </li>
-                    ))}
-                </ul>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                    <Pie
-                        data={paymentMethodsData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={120}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label
-                    >
-                        {paymentMethodsData.map((_entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip />
-                </PieChart>
-            </ResponsiveContainer>
-        </div>
-    );
+	return (
+		<div className="bg-white  md:col-span-2  p-4 rounded-lg shadow-md">
+			<h2 className="text-lg font-bold mb-2">Payment Methods Breakdown</h2>
+			{paymentMethodsBreakdownByGateway?.length < 1 && <div>No data available</div>}
+			{paymentMethodsBreakdownByGateway?.length > 0 && <ResponsiveContainer width="100%" height={400}>
+				<PieChart>
+					<Pie
+						nameKey="gateway"
+						data={paymentMethodsBreakdownByGateway}
+						cx="50%"
+						cy="50%"
+						labelLine={false}
+						paddingAngle={2}
+						label={({ gateway, value }) => (value > 9 ? `${gateway}: $${value}` : "")}
+						outerRadius={120}
+						innerRadius={80}
+						fill="#8884d8"
+						dataKey="value">
+						{paymentMethodsBreakdownByGateway?.map((_entry, index: number) => (
+							<Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS?.length]} />
+						))}
+					</Pie>
+					<Legend verticalAlign="bottom" height={15} />
+					<Tooltip />
+				</PieChart>
+			</ResponsiveContainer>}
+		</div>
+	);
 };
 
 export default PaymentMethodsBreakdown;
-

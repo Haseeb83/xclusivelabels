@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// @ts-ignore
+
 import { useTable, useSortBy, Column } from 'react-table';
 import { CSVLink } from "react-csv";
 import { Button } from "@client/components/ui/button";
@@ -124,8 +124,8 @@ const TransactionHistoryTable: React.FC<TransactionHistoryTableProps> = ({ data 
                     <div className="min-w-full border-t-2 border-x-2 border-gray-200 rounded-t-lg">
                         <table {...getTableProps()} className="min-w-full">
                             <thead className="text-gray-900 bg-white sticky top-0 z-10">
-                                {headerGroups.map((headerGroup: { getHeaderGroupProps: () => JSX.IntrinsicAttributes & React.ClassAttributes<HTMLTableRowElement> & React.HTMLAttributes<HTMLTableRowElement>; headers: any[]; }, _index: any) => (
-                                    <tr {...headerGroup.getHeaderGroupProps()}>
+                                {headerGroups.map((headerGroup: { getHeaderGroupProps: () => JSX.IntrinsicAttributes & React.ClassAttributes<HTMLTableRowElement> & React.HTMLAttributes<HTMLTableRowElement>; headers: any[]; }, _index: number) => (
+                                    <tr key={_index} {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map((column, columnIndex) => (
                                             <th
                                                 {...column.getHeaderProps(column.getSortByToggleProps())}

@@ -41,7 +41,7 @@ const TableMenu = ({ row }: { row: Row<PackagesSelectModel> }) => {
 		<DropdownWrapper
 			className="mr-20"
 			items={[
-				<Link to={`/packages/${row.original.uuid}`} key="edit_packages">
+				<Link to={`/user/packages/${row.original.uuid}`} key="edit_packages">
 					<Button type="button" variant="ghost" className="justify-start w-full gap-2 px-2">
 						<Edit size={16} />
 						Edit

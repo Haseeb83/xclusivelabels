@@ -32,6 +32,7 @@ const EditPackageUserPage = () => {
 			name: "",
 			weight: 0,
 			width: 0,
+			radio: "lb"
 		},
 	});
 
@@ -45,7 +46,7 @@ const EditPackageUserPage = () => {
 
 		if (res.success) {
 			api.showSuccessToast();
-			navigate("/packages");
+			navigate("/user/packages");
 			return;
 		}
 

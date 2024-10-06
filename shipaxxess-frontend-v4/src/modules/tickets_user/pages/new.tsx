@@ -36,7 +36,7 @@ const NewTicketUserPage = () => {
 
 		const req = await api.url("/user/tickets").post(values);
 		const res = await req.json<{ success: boolean }>();
-
+		console.log(res)
 		if (res.success) {
 			api.showSuccessToast();
 			navigate("/tickets");

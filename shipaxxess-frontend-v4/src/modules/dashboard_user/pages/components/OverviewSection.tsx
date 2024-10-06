@@ -40,7 +40,7 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ title, value, icon, l
                         ) : (
 
                             <a
-                                // @ts-ignore
+                           // @ts-expect-error fgdsfg
                                 href={linkUrl}
                                 className="text-blue-500 hover:text-blue-700 ml-2 mt-3 inline-block"
                                 style={{ cursor: 'pointer' }}

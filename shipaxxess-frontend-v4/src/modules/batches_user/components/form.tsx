@@ -20,7 +20,7 @@ import Autocomplete from "react-google-autocomplete";
 import { StateCombobox } from "@client/components/common/combobox";
 import { toast } from "sonner";
 import { v4 } from "uuid";
-import React from "react";
+import React, { useRef } from "react";
 import { api } from "@client/lib/api";
 import { WeightsSelectModel } from "@db/weights";
 import { usePapaParse } from "react-papaparse";
@@ -29,6 +29,7 @@ import LabelsRecipentsTable from "./recipientsTable";
 import { useLoading } from "@client/hooks/useLoading";
 import { RadioGroup, RadioGroupItem } from "@client/components/ui/radio-group";
 import { Checkbox } from "@client/components/ui/checkbox";
+import { useCouponQuery, useDiscountsQuery } from "../hooks/useDiscountsQuery";
 
 type BatchNewFormProps = {
 	addresses: UseQueryResult<AddressesSelectModel[]>;
@@ -51,9 +52,11 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 	const [csvheaders, setCsvheaders] = React.useState<string[]>([]);
 
 	const [costs, setCosts] = React.useState(0);
-
+	const [weightCost, setweightCost] = React.useState(0);
+	const [couponCode, setCouponCode] = React.useState("");
+	const [couponApplied, setCouponApplied] = React.useState(false);
 	const { button: SubmitBatchButton, setIsLoading } = useLoading({ label: "Confirm & Pay", className: "w-full" });
-
+	const discountPercent = useDiscountsQuery()?.data?.[0]?.value || 0;
 	const form = useForm<Labels.BATCHZODSCHEMA>({
 		defaultValues: {
 			batch_uuid: v4(),
@@ -93,6 +96,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 			saturday: false,
 			signature: false,
 			saved_sender: false,
+			coupon: "",
 		},
 		resolver: zodResolver(Labels.BATCHZODSCHEMA),
 	});
@@ -110,17 +114,18 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 		},
 		resolver: zodResolver(Address.PHONEOPTIONALSCHEMA),
 	});
-
 	const onSubmit = async (data: Labels.BATCHZODSCHEMA) => {
 		setIsLoading(true);
+		console.log(data);
 
-		const req = await api.url("/user/labels/batch").useAuth().post(data);
+		const req = await api.url("/user/labels/singleLabel").useAuth().post(data);
 		const res = await req.json<{ success?: string }>();
 
 		if (res.success) {
 			api.showSuccessToast();
 			setIsLoading(false);
 			setCosts(0);
+			setweightCost(0);
 			form.reset();
 			return;
 		}
@@ -242,12 +247,14 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 
 	React.useMemo(async () => {
 		const weight = form.watch("package.weight");
+		const width = form.watch("package.width");
+		const height = form.watch("package.height");
+		const length = form.watch("package.length");
 		const type_id = form.watch("type.id");
 		const type = form.watch("type.type");
-
 		if (weight === 0) return;
 
-		const req = await api.url("/user/weights").useAuth().post({ weight, type_id, type });
+		const req = await api.url("/user/weights").useAuth().post({ weight, type_id, type, width, height, length });
 		const res = await req.json<WeightsSelectModel & { type: TypesSelectModel } & { message?: string }>();
 
 		if (res.message) {
@@ -255,8 +262,8 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 			return;
 		}
 
-		setCosts(res.user_cost);
-
+		setweightCost(res.user_cost);
+		setCosts(res.user_cost - res.user_cost * (discountPercent / 100));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [form.watch("package.weight")]);
 
@@ -273,6 +280,29 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 			}
 		}
 	}, [form.formState.errors]);
+	const couponRef = useRef(null);
+
+	const { data: couponData, refetch } = useCouponQuery(couponCode, !!couponCode) as any;
+
+	const handleApplyCoupon = async () => {
+		const { data } = (await refetch()) as any;
+		if (!data?.value) return toast.error("Coupon does not exists");
+	};
+
+	React.useEffect(() => {
+		if (couponData?.value) {
+			setCouponApplied(true);
+			setCosts(weightCost - weightCost * ((couponData?.value || 0) / 100));
+			form.setValue("coupon", couponData?.code);
+		} else {
+		}
+	}, [couponData, weightCost]);
+
+	React.useEffect(() => {
+		if (couponCode) {
+			setCouponApplied(false);
+		}
+	}, [couponCode]);
 
 	return (
 		<>
@@ -306,11 +336,11 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 												<FormLabel>Delivery Type</FormLabel>
 												<Select
 													defaultValue={field.value}
-													onValueChange={(id: any) => {
+													onValueChange={(id) => {
 														if (!types.data) return;
-
 														const item = findItemById(types.data, Number(id));
 														if (!item) return;
+														console.log(item);
 
 														form.setValue("type.id", item.id);
 														form.setValue("type.label", item.label);
@@ -369,7 +399,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 												<FormLabel>Ship From</FormLabel>
 												<Select
 													defaultValue={field.value}
-													onValueChange={(id: string) => {
+													onValueChange={(id) => {
 														if (id === "custom") {
 															field.onChange(id);
 														}
@@ -579,7 +609,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 												<FormLabel>Package</FormLabel>
 												<Select
 													defaultValue={field.value}
-													onValueChange={(id: any) => {
+													onValueChange={(id) => {
 														if (!packages.data) return toast.error("No packages found");
 
 														const item = findItemById(packages.data, Number(id));
@@ -633,19 +663,7 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 										</FormItem>
 									)}
 								/>
-								<FormField
-									control={form.control}
-									name="package.length"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Length (inch)</FormLabel>
-											<FormControl>
-												<Input {...field} type="number" disabled={form.watch("type.id") ? false : true} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+
 								<FormField
 									name="package.width"
 									control={form.control}
@@ -665,6 +683,19 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>Height (inch)</FormLabel>
+											<FormControl>
+												<Input {...field} type="number" disabled={form.watch("type.id") ? false : true} />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="package.length"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Length (inch)</FormLabel>
 											<FormControl>
 												<Input {...field} type="number" disabled={form.watch("type.id") ? false : true} />
 											</FormControl>
@@ -913,6 +944,21 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 						</Card>
 						<div className="w-2/6">
 							<Card className="p-6 space-y-2">
+								<div className="flex items-center mb-5">
+									<input
+										ref={couponRef}
+										onChange={(e) => setCouponCode(e.target.value)}
+										placeholder="Enter Coupon"
+										className="focus:outline-none w-full focus:ring-0 border rounded-lg p-2 rounded-r-none"
+									/>
+									<label
+										onClick={handleApplyCoupon}
+										className={`rounded-l-none  cursor-pointer bg-primary text-white px-3 py-2 rounded-r-lg ${
+											couponApplied && "opacity-80"
+										}`}>
+										{!couponApplied ? "Apply" : "Applied"}
+									</label>
+								</div>
 								<div className="grid items-center grid-cols-2">
 									<h1 className="text-sm text-left text-muted-foreground">Single Label Cost:</h1>
 									<p className="text-lg font-normal text-right">${costs.toFixed(2)}</p>
@@ -926,11 +972,20 @@ const BatchNewForm = ({ addresses, packages, types }: BatchNewFormProps) => {
 								<p className="text-lg font-normal text-right text-green-500">- ${10}</p>
 							</div> */}
 								<Separator />
-								<div className="grid items-center grid-cols-2">
-									<h1 className="text-sm text-left text-muted-foreground">You will pay in total :</h1>
-									<p className="text-3xl font-semibold text-right text-primary">
-										${numberWithCommas(costs * form.watch("recipient").length)}
-									</p>
+								<div className="flex items-center justify-between">
+									<h1 className="text-sm text-left text-muted-foreground w-full">You will pay in total :</h1>
+									<div className="flex gap-2 w-max">
+										<div className="flex text-xl font-semibold text-right text-gray-500">
+											$
+											<p className="text-xl font-semibold text-right text-gray-500 line-through">
+												{numberWithCommas(weightCost * form.watch("recipient").length)}
+											</p>
+										</div>
+
+										<p className="text-3xl font-semibold text-right text-primary">
+											${numberWithCommas(costs * form.watch("recipient").length)}
+										</p>
+									</div>
 								</div>
 								<div className="flex items-center justify-end pt-4">{SubmitBatchButton}</div>
 							</Card>
